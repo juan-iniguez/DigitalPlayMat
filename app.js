@@ -200,4 +200,6 @@ router.post('/addMap', upload_.single('map'), (req,res,next)=>{
     })
 })
 
-server.listen(PORT, ()=>{console.log(`Server running on port ${PORT}`)})
+let DEVADDRESS = process.env.DEV
+
+server.listen(PORT, DEVADDRESS || '192.168.1.148', ()=>{console.log(`Server running on port ${PORT}`)})
