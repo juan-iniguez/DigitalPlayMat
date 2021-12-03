@@ -15,9 +15,14 @@ const canvasMain = document.getElementById('canvas-main')
 
 const socket = io();
 
+socket.on('connect', ()=>{
+    console.log(`SessionId: ${socket.id}`)
+})
+
 socket.on('message', message=>{
     console.log(message)
 })
+
 
 menuBtnOpen.addEventListener('click', (e)=>{
         menu.style = '';

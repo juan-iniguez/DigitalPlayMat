@@ -3,6 +3,13 @@ let introH2 = document.getElementById('intro h2')
 let loading = document.getElementById('loading');
 let mainContainer = document.getElementById('main-container')
 
+const socket = io();
+
+socket.on('message', message=>{
+    console.log(message)
+})
+
+
 // Brief Animation
 
 setTimeout(()=>{
