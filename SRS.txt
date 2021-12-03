@@ -1,0 +1,5 @@
+- Battle State
+- DM Site
+- Player Site
+- Custom Pictures
+- Right Click moves - Partially Done
