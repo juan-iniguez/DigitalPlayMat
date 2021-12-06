@@ -113,7 +113,7 @@ function mapMenuActivate(){
                     console.log(create.data)
     
                     if(create.data){
-                        window.location.href = `/campaign/${campaignName.campaignName}`
+                        window.location.href = `/campaign/${campaignName.value}`
                     }else{
                         console.log(data)
                     }
@@ -172,7 +172,7 @@ function mapMenuActivate(){
                     const create = await axios.post('/createCampaign', createDP)
                     console.log(data)
                     console.log(create.data)
-                    if(data === 'Done!'){
+                    if(create.data){
                         window.location.href = `/campaign/${campaignName.value}`
                     }else{
                         console.log(data)
