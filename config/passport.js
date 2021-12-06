@@ -16,15 +16,15 @@ const verifyCallback = (username, password, done) =>{
         .then((user)=> {
 
             if(!user) {
-                console.log('User Not Found')
+                // console.log('User Not Found')
                 return done(null,false) 
             }
 
             const isValid = validPassword(password, user.hash, user.salt);
 
             if(isValid) {
-                console.log('User is Found')
-                console.log(user)
+                // console.log('User is Found')
+                // console.log(user)
                 return done(null, user);
             } else {
                 return done(null, false);
@@ -40,7 +40,7 @@ const strategy = new LocalStrategy(customFields, verifyCallback);
 passport.use(strategy); 
 
 passport.serializeUser((user, done) => {
-    console.log(`this is ${user.id}`)
+    // console.log(`this is ${user.id}`)
     done(null, user.id);
 })
 

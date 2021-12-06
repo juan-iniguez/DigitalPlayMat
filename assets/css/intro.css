@@ -1,6 +1,24 @@
+@font-face {
+    font-family: dnd;
+    src: url('/assets/fonts/romic/RomicStd-Medium.otf');
+    font-weight:normal;
+}
+@font-face {
+    font-family: dnd;
+    src: url('/assets/fonts/romic/RomicStd-Bold.otf');
+    font-weight:bold;
+}
+@font-face {
+    font-family: dnd;
+    src: url('/assets/fonts/romic/RomicStd-Light.otf');
+    font-weight:lighter;
+}
+
+
 body{
     width: 100%;
     height: 100vh;
+    overflow-x: hidden;
     background-color: #000000;    
     background-position: top;
     background-repeat: no-repeat;
@@ -14,6 +32,7 @@ body{
 }
 
 .intro{
+    text-align: center;
     color: white;
     transition-duration: 300ms;
     transition-property: all;
@@ -27,9 +46,18 @@ body{
 .main-container{
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     width: 100%;
+    height: fit-content;
+    padding: 5rem;
+    transition-duration: 300ms;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.main-container.next{
+    justify-content: center;
     height: 100%;
 }
 
@@ -64,6 +92,10 @@ body{
     min-width: 200px;
     text-align: center;
     margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 #map{
@@ -71,33 +103,83 @@ body{
 }
 
 #map-label{
-    width: 100%;
-    height: 50px;
-    background-color: #4d4d4d;
+    width: 200px;
+    height: 200px;
+    background-color: #4d4d4d88;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: solid white 2px;
     border-radius: 10px;
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
+    color: #ffffff9e;
     margin-top: 1rem;
 }
 
-.map-form{
+#map-label:hover{
+    background-color: #b3b3b388;
+}
+
+.message{
+    color: white;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: fit-content;
+    padding:0rem;
+    background-color: rgba(165, 42, 42, 0);
+    font-size: 0rem;
+    margin-top: 1rem;
+    width: 0%;
+    height: 0rem;
+    opacity: 0;
+    transition-duration: 300ms;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.320, 1);
 }
 
-#map-name{
-    background-color: rgba(255, 255, 255, 0.575);
-    border: solid white 2px;
+.message.error{
+    padding:1.5rem;
+    font-size: 1rem;
+    background-color: brown;
+    width: 100%;
+    height: fit-content;
+    opacity: 1;
     border-radius: 10px;
 }
 
+.map-form{
+    grid-template-columns: auto auto auto;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+}
+
+.map-item{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: min-content;
+    margin-right: .5rem;
+    margin-left: .5rem;
+}
+
+#map-name{
+    color: rgba(255, 255, 255, 0.719);
+    margin-top: 1rem;
+    background-color: rgba(102, 102, 102, 0.58);
+    border: solid #737373 2px;
+}
+
 #map-submit{
+    display: inline-block;
+    position: relative;
+    margin-top: 1rem;
     background-color: steelblue;
     color: white;
     width: 200px;
@@ -111,4 +193,30 @@ body{
 #map-submit:hover{
     background-color: white;
     color: black;
+}
+
+.map-uploaded-img{
+    margin-top: 1rem;
+    width: 200px;
+    height: 200px;
+}
+
+.campaign-labels{
+    display: inline-block;
+    width: 100%;
+    font-family: DnD;
+    color: white;
+}
+
+.campaign-description{
+    resize: none;
+}
+
+.campaign-inputs{
+    color: rgba(255, 255, 255, 0.719);
+    margin-top: .2rem;
+    margin-bottom: 1rem;
+    background-color: rgba(102, 102, 102, 0.58);
+    border: solid #737373 2px;
+    width: 100%;
 }

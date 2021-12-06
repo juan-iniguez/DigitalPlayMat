@@ -1,5 +1,39 @@
-<div class="canvas-container">
-    <div class="main-container"></div>
-    <canvas id="tutorial"></canvas>
+<div id='index-container' class="index-container hide">
+    <div id='index-card' class='index-card hide'>
+        <h1>Welcome Back!</h1>
+        <h2>Please Log-in to continue your Journey</h2>
+        <div class='login-container'>
+            <form action='' onclick="preventDef(event)">
+                <label for='username'>E-mail</label>
+                <input class="" id='username' type="email" onchange="checkUsername(event)">
+                <label for='password'>Password</label>
+                <input class="" id='password' type="password" onchange="checkPassword(event)">
+                <div class='btn-container'>
+                    <input id='submit' type="submit" value="Log-In">
+                    <input class='register' id='register' type="button" value="Create an Account">
+                </div>
+                <p id='message' class="message"></p>
+            </form>
+        </div>
+    </div>
+    <div id='submit-card' class='submit-card none'>
+        <h1>Sign-Up Ho!</h1>
+        <h2>Complete all fields or I'll find you...</h2>
+        <div class='submit-container'>
+            <form action='' onclick="preventDef(event)">
+                <label for='name'>Name</label>
+                <input class="" id='name' type="text" oninput="checkNameSubmit(event)">
+                <label for='username'>E-mail</label>
+                <input class="" id='username-sub' type="email" onchange="checkUsername(event)">
+                <label for='password'>Password</label>
+                <input class="" id='password-sub' type="password" onchange="checkPassword(event)">
+                <div class='btn-container'>
+                    <input class='' id='signup' type="submit" value="Create Account" onclick='doRegisterSend(event)'>
+                    <input class='register' id='register-' type="button" value="Go back to Log-In" onclick="goBackLogIn(event)">
+                </div>
+                <p id='message-' class="message-"></p>
+            </form>
+        </div>
+    </div>
 </div>
 <script src="/assets/js/index.js"></script>

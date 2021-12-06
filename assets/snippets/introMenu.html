@@ -1,8 +1,19 @@
-<div class="map-form">
-    <h1 style="color:white">Where art thou Kingdom?</h1>
-    <label style="color: whitesmoke;">Name of Map</label>
-    <input id='map-name' name='map-name' type="text">
-    <label id='map-label' for='map'>Click to Add Map</label>
-    <input id='map' name='map' type="file">
-    <a id='map-submit' name='map-submit' onclick="mapMenuActivate(event)">Submit</a>
+<div>
+    <label class="campaign-labels" for="campaign-name">Name</label>
+    <input class="campaign-inputs" id='campaign-name' type="text" placeholder="The King is good, who killed him?">
+    <label class="campaign-labels" for="campaign-description">Description</label>
+    <textarea class="campaign-inputs" id='campaign-description' class='campaign-description' placeholder="In the benningy..."></textarea>
 </div>
+
+<h1 style="color:white;font-family: DnD;">Where art thou Kingdom?</h1>
+<p style='margin:0px;color: white;'>Map Tile Size: 70x70px</p>
+    <div id='map-form' class="map-form">
+        <div id='map-item' class="map-item">
+            <label id='map-label' for='map'>Click to Add Map <br> ( .jpg, .png )</label>
+            <input style="width:0px;height:0px;" id='map' name='map' type="file" class='map' accept='.jpg, .png, .jpeg'>
+            <input id='map-name' name='map-name' type="text" class='map-name' oninput="preventCharacters(event)">
+            <label for='map-name' style="color: whitesmoke;">Name of Map</label>
+        </div>
+    </div>
+<a id='map-submit' name='map-submit' onclick="mapMenuActivate(event)">GO!</a>
+<p id='message' class="message"></p>

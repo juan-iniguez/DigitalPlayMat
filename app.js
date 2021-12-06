@@ -16,6 +16,7 @@ const connection = require('./config/database.js');
 const MongoStore = require('connect-mongo')
 const mongoose = require('mongoose')
 const Maps = connection.models.Maps;
+const User = connection.models.User;
 const app = express();
 
 const options = {
@@ -49,8 +50,8 @@ app.set('view engine', 'ejs')
 app.set('layout', 'layout1')
 app.use('/assets' ,express.static('./assets'))
 app.use('/' ,express.static('./public'))
-// app.use(express.json({ limit: '50mb'}));
-// app.use(express.urlencoded({ limit: '50mb', extended: true})); 
+app.use(express.json({ limit: '50mb'}));
+app.use(express.urlencoded({ limit: '50mb', extended: true})); 
 
 // Sessions
 
@@ -74,8 +75,8 @@ console.log('Express Sessions Ready')
 app.use(passport.initialize());
 app.use(passport.session());
 app.use((req, res, next) => {   
-        console.log(req.session);
-        console.log(req.user);
+        // console.log(req.session);
+        // console.log(req.user);
         next();
 });
 
@@ -85,17 +86,51 @@ app.use(router)
 
 router.get('/', (req,res,next)=>{
 
-    // Socket Open Connection
+    let indexCSS = fs.readFileSync('./assets/snippets/indexCSS.html')
+    res.render('index' , {title: 'Digital Play Mat | Rolfe Shepsky (C) ', stylesheet: indexCSS})
+
+    // res.render('start' , {title: 'DnD Map | Rolfe Shepsky (C) ', stylesheet: introFile})
+})
+
+router.get('/campaign/:id', (req,res,next)=>{
+    // Load an Already made campaign
+
     io.on('connection', socket=>{
         socket.emit('message', 'You are connected...')
         console.log(socket.id)
     })
 
-    let introFile = fs.readFileSync('./assets/snippets/intro.html')
-    res.render('start' , {title: 'DnD Map | Rolfe Shepsky (C) ', stylesheet: introFile})
+    let dmFile = fs.readFileSync('./assets/snippets/dmFile.html')
+    res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile})
+
+
 })
 
-// TODO : CREATE A LOGIN AND SIGN UP PAGE
+router.get('/new-campaign', (req,res,next)=>{
+
+    // Socket Open Connection
+    io.on('connection', socket=>{
+        socket.emit('message', 'You are connected...')
+        // console.log(socket.id)
+    })
+
+    let newCampaignMap = fs.readFileSync('./assets/snippets/newCampaignMap.html')
+    res.render('newCampaign' , {title: 'DnD Map | Rolfe Shepsky (C) ', stylesheet: newCampaignMap})
+})
+
+router.get('/getCampaigns', (req,res,next)=>{
+    console.log(req.user.campaigns)
+    let data = {
+        campaigns: req.user.campaigns
+    }
+    res.send(data)
+})
+
+router.get('/player/:id', (req,res,next)=>{
+
+})
+
+// MAKE SCROLLING TO ZOOM OUT DONE
 // MAKE A PLAYER SITE AND A DM SITE
 // CONNECT THE DM ROOM TO THE PLAYER ROOM WITH SOCKET.IO
 
@@ -111,9 +146,51 @@ router.get('/dm-side', (req,res,next)=>{
     res.render('dnd' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile})
 })
 
+router.get('/preview/:id', (req,res,next)=>{
+    console.log(req.params.id)
+    let id = req.params.id
+    let originalImage = fs.readFileSync(__dirname + `/public/maps/${id}`)
+    let outputImage = undefined;
+
+    sharp(originalImage)
+    .resize(256, 256, {
+        fit: 'cover'
+    })
+    .toBuffer((err,data,info)=>{
+        outputImage = Buffer.from(data, 'base64')
+
+        res.writeHead(200, {
+            'Content-Type':'image/png',
+            'Content-Length': outputImage.length
+        });
+
+        res.end(outputImage);
+    })
+
+
+})
+
 // POST REQUESTS 
 
 router.post('/login', async function(req, res, next) {
+    // console.log(req.body)
+
+    let quotes = [
+        '“The Study of philosophy is not that we may know what men have thought, but what the truth of things is.” —Thomas Aquinas', '“What is better than wisdom? Woman. And what is better than a good woman? Nothing.” —Geoffrey Chaucer', '“The nourishment of body is food, while the nourishment of the soul is feeding others.” —`Alī ibn Abī Ṭālib, Caliph', '“Justice is the constant and perpetual wish to render every one his due.” —Emperor Justinian',
+    ]
+
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+    }
+
+    let n_ = getRandomInt(0, quotes.length-1)
+    // console.log(n_)
+    let dP = {
+        status: 'Successful Log In',
+        quotes: quotes[n_],
+    }
 
     const existUsername = await User.findOne({ username: req.body.username});
 
@@ -126,10 +203,16 @@ router.post('/login', async function(req, res, next) {
       if (!user) { return res.send('username and password incorrect'); }
       req.logIn(user, function(err) {
         if (err) { return next(err); }
-        return res.send('/equipment');
+        return res.send(dP);
       });
     })(req, res, next);
-}});
+}
+});
+
+router.post('/logout', (req, res, next) => {
+    req.logout();
+    res.send('/login');
+});
 
 router.post('/register', async (req,res,next)=>{
     const saltHash = genPassword(req.body.password);
@@ -144,6 +227,7 @@ router.post('/register', async (req,res,next)=>{
       res.send('username taken');
     }else{        
         const newUser = new User({
+            name: req.body.name,
             username: req.body.username,
             hash: hash,
             salt: salt
@@ -153,7 +237,7 @@ router.post('/register', async (req,res,next)=>{
            .then((user) => {
             //    console.log(user);
             });
-            res.send('/login');
+            res.send('success');
         }
 });
 
@@ -184,22 +268,95 @@ router.post('/tokens-upload', upload.array('tokens'), (req,res,next)=>{
 router.post('/addMap', upload_.single('map'), (req,res,next)=>{
     let mapImage = req.file
     let mimetype = mapImage.mimetype.split('/')[1]
-
-    console.log(mapImage)
-
     let Olddest = req.file.destination + req.file.filename
     let newDest = req.file.destination + req.file.originalname + '.' + mimetype
-
 
     fs.rename( Olddest , newDest, (err)=>{
         if(err){
             res.send(err)
+            console.log(err)
         }else{
             res.send('Done!')
         }
     })
 })
 
-let DEVADDRESS = process.env.DEV
+router.post('/addMaps', upload_.array('map'), (req,res,next)=>{
 
-server.listen(PORT, ()=>{console.log(`Server running on port ${PORT}`)})
+    console.log(req.files)
+    res.send(req.files)
+
+    // Maps in the files
+    let maps = req.files
+
+    // Mimetype Array
+    let mimetype = []
+
+    for(let el of maps){
+
+        let Olddest = el.destination + el.filename
+        let newDest = el.destination + el.originalname + '.' + el.mimetype.split('/')[1]
+    
+        fs.rename( Olddest , newDest, (err)=>{
+            if(err){
+                res.send(err)
+            }else if(maps.indexOf(el) === maps.length-1){
+                res.send('Done!')
+            }else{
+                console.log('not yet')
+            }
+        })
+    }
+})
+
+router.post('/createCampaign', (req,res,next)=>{
+    console.log(req.body.campaign)
+    console.log(req.body.description)
+
+    let campaigns = {
+        name: String,
+        description: String,
+        maps: [],
+        date: Date,
+        time: String,
+    }
+
+    campaigns.name = req.body.campaignName;
+    campaigns.description = req.body.description;
+    campaigns.maps = req.body.maps;
+    campaigns.date = new Date();
+    campaigns.time = campaigns.date;
+
+    async function uploadUserDB(){
+        try {
+            const user = await User.findByIdAndUpdate(req.user._id, {$push: {campaigns: campaigns}});
+            res.send(user)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    uploadUserDB();
+
+
+})
+
+router.post('/getMainCanvas', (req,res,next)=>{
+    // console.log(req.body)
+    // console.log(req.user)
+    let index = undefined;
+
+    for(let el of req.user.campaigns){
+        if(el.name === req.body.campaign){
+            index = req.user.campaigns.indexOf(el)
+        }
+    }
+
+    let data = {
+        img:req.user.campaigns[index].maps[0],
+        name:req.user.campaigns[index].maps[0].split('.')[0]
+    }
+
+    res.send(data)
+})
+
+server.listen(PORT || 443, ()=>{console.log(`Server running on port ${PORT}`)})

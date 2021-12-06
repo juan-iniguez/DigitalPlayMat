@@ -1,3 +1,19 @@
+@font-face {
+    font-family: dnd;
+    src: url('/assets/fonts/romic/RomicStd-Medium.otf');
+    font-weight:normal;
+}
+@font-face {
+    font-family: dnd;
+    src: url('/assets/fonts/romic/RomicStd-Bold.otf');
+    font-weight:bold;
+}
+@font-face {
+    font-family: dnd;
+    src: url('/assets/fonts/romic/RomicStd-Light.otf');
+    font-weight:lighter;
+}
+
 body{
     margin: 0px;
     font-size: 0px;
@@ -55,6 +71,7 @@ input::-webkit-inner-spin-button {
 
 
 #map-name{
+    text-align: left;
     color: rgba(255, 255, 255, 0.561);
 }
 
@@ -141,10 +158,11 @@ input::-webkit-inner-spin-button {
 
 #top{
     display: flex;
+    top: 0px;
     flex-direction: column;
     width: fit-content;
     position: absolute;
-    height: 100%;
+    height: fit-content;
     padding-left: 1rem;
     padding-right: 1rem;
     justify-content: flex-start;

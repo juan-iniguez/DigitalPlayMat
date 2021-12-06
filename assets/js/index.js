@@ -1,122 +1,320 @@
-var canvas = document.getElementById('tutorial');
-var c = canvas.getContext('2d');
+// Shorten getElements
+let gEI = function(element){
+    return document.getElementById(element)
+};
+let gEC = function(element){
+    return document.getElementsByClassName(element)
+};
+let cE = function(element){
+    return document.createElement(element)
+};
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let doAnim = true;
-let mouse = {
-    x: undefined,
-    y: undefined,
-}
-let minRadius = 10;
-let maxRadius = 80;
-var circleArray = [];
-let stillResizing = false;
-
-c.imageSmoothingEnabled = false;
-
-function makeCircles(x, y, dx, dy, radius){
-    
-    this.x = x;
-    this.y = y;
-    this.dx = dx;
-    this.dy = dy;
-    this.radius = radius;
-
-    this.draw = function(){
-
-        c.beginPath();
-        c.arc(this.x, this.y, this.radius,0, Math.PI *2, true);
-        var gradient = c.createLinearGradient(50, 0, 800, 0);
-        gradient.addColorStop(0, 'blue');
-        gradient.addColorStop(1, "brown")
-        c.fillStyle= gradient;
-        c.strokeStyle='white';
-        c.lineWidth=7;
-        
-        c.stroke();
-        c.fill();
-        
-    }
-    
-    this.update = function(){
-        if(this.x + this.radius > window.innerWidth || this.x - this.radius < 0){
-            this.dx = -this.dx;
-        }
-        
-        if(this.y + this.radius > window.innerHeight || this.y - this.radius < 0){
-            this.dy = -this.dy
-        }
-        
-        this.x += this.dx
-        this.y += this.dy
-
-        // Interactivity
-
-        if((mouse.x + maxRadius > this.x) && (mouse.x - maxRadius < this.x) && (mouse.y + maxRadius > this.y) && (mouse.y- maxRadius < this.y) ){
-            if(this.radius < maxRadius){
-                this.radius += 1
-            }
-        }else{
-            if(this.radius > minRadius){
-                this.radius -= 1
-            }
-        }
-
-        this.draw()
-    }
-    
+// Prevent Default
+function preventDef(e){
+    e.preventDefault()
 }
 
-function circlesGenerator(){
-    circleArray = [];
+let indexContainer = gEI('index-container');
+let indexCard = gEI('index-card')
+let submit = gEI('submit')
+let register = gEI('register')
+register.onclick = doRegister;
+submit.onclick = doLogInCheck;
 
-    if(!doAnim){
-        doAnim = true
-    }
-    
-    for(i=0;i<100;i++){
-        var x = Math.random() * (window.innerWidth - radius *2) + radius;
-        var y = Math.random() * (window.innerHeight - radius *2) + radius;
-        var dx = (Math.random() - 0.5) * 0.1
-        var dy = (Math.random() - 0.5) * 0.1
-        var radius = 35
-        
-        circleArray.push(new makeCircles(x, y, dx, dy, radius))
-    }
-    animation();
-}
-
-function animation(){
-    
-    if(!doAnim){
-        c.clearRect(0, 0, window.innerWidth, window.innerHeight);
-        return
-    }
-
-    c.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    requestAnimationFrame(animation)
-    for(i=0;i<circleArray.length;i++){
-        circleArray[i].update()
-    }
-}
-
-window.onload = circlesGenerator();
-
-window.addEventListener('resize', (e)=>{
-
-    c.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    doAnim = false;
+setTimeout(()=>{
+    indexContainer.classList.toggle('hide')
     setTimeout(()=>{
-        circlesGenerator();
+        indexCard.classList.toggle('hide')
     },100)
-})
+},200)
 
-window.addEventListener('mousemove', (e)=>{
-    mouse.x = e.x;
-    mouse.y = e.y;
-})
+function checkUsername(e){
+    let username = gEI('username')
+    let reg = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
+    if(!reg.test(username.value)){
+        (username.classname === 'error')?console.log():username.classList.toggle('error');
+    }else if(username.value === ''){
+        (username.classname === 'error')?console.log():username.classList.toggle('error');
+    }else{
+        (username.classname === 'error')?username.classList.toggle('error'):console.log('good');
+    }
+}
+
+function checkPassword(e){
+    let password = e.target
+    if(password.value === ''){
+        if(password.className === 'error'){
+        }else{
+            password.classList.toggle('error')
+        }
+    }else{
+        if(password.className === 'error'){
+            password.classList.toggle('error')
+        }
+    }
+}
+
+function doLogInCheck(e){
+    let username = gEI('username')
+    let password = gEI('password')
+    let message = gEI('message')
+
+    let dP = {
+        username: username.value,
+        password: password.value
+    }
+
+    if(!username.value && !password.value){
+        message.classList.toggle('err')
+        message.innerHTML = 'Username and Password Missing'
+        setTimeout(()=>{
+            message.innerHTML = ''
+            message.classList.toggle('err')
+        },1500)
+    }else if(!username.value){
+        message.classList.toggle('err')
+        message.innerHTML = 'Username Missing'
+        setTimeout(()=>{
+            message.innerHTML = ''
+            message.classList.toggle('err')
+        },1500)
+    }else if(!password.value){
+        message.classList.toggle('err')
+        message.innerHTML = 'Password Missing'
+        setTimeout(()=>{
+            message.innerHTML = ''
+            message.classList.toggle('err')
+        },1500)
+    }else if(username.value && password.value){
+        doLogIn(dP, message);
+    }
+}
+
+async function doLogIn(dP, message){
+    // console.log(dP)
+    try {
+        const {data} = await axios.post('/login', {
+            username: dP.username,
+            password: dP.password
+        })
+        if(data === 'username not found'){
+            message.innerHTML = 'No Username Found';
+            message.classList.toggle('err')
+            setTimeout(()=>{
+                message.innerHTML = '';
+                message.classList.toggle('err')
+            },2000)
+        }else if(data === 'username and password incorrect'){
+            message.innerHTML = 'Incorrect Password';
+            message.classList.toggle('err')
+            setTimeout(()=>{
+                message.innerHTML = '';
+                message.classList.toggle('err')
+            },2000)
+        }else if(data.status === 'Successful Log In'){
+            // console.log(data)
+            logInTrue(data);
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+function doRegister(e){
+    let indexCard = gEI('index-card')
+    let submitCard = gEI('submit-card')
+    indexCard.classList.toggle('outleft')
+    indexContainer.classList.toggle('submit')
+    
+    setTimeout(()=>{
+        indexCard.classList.toggle('outleft')
+        indexCard.classList.toggle('none')
+        submitCard.classList.toggle('none')
+        submitCard.classList.toggle('inright')
+        setTimeout(()=>{
+            submitCard.classList.toggle('inright')
+        },700)
+    },500)
+}
+
+async function doRegisterSend(e){
+    let name = gEI('name')
+    let username = gEI('username-sub');
+    let password = gEI('password-sub');
+    let message = gEI('message-');
+    let submitCard = gEI('submit-card');
+
+    let endSpace = /\s$/;
+
+    if(endSpace.test(name.value)){
+        let e_ = name.value.replace(' ', '')
+        name.value = e_
+    }
+
+    let dP = {
+        name: name.value,
+        username: username.value,
+        password: password.value
+    }
+
+    try {
+        const {data} = await axios.post('/register', dP)
+        console.log(data)
+        if(data === 'success'){
+            message.innerHTML = 'Success! Account Registered';
+            message.classList.toggle('suc')
+            setTimeout(()=>{
+                message.innerHTML = '';
+                message.classList.toggle('suc')
+                submitCard.style = 'cursor:wait;'
+                document.body,style = 'cursor:wait;'
+                setTimeout(()=>{
+                    window.location.href = '/'
+                },200)
+            },2000)
+        }else if(data === 'username taken'){
+            message.innerHTML = 'Username is Already Taken';
+            message.classList.toggle('err')
+            setTimeout(()=>{
+                message.innerHTML = '';
+                message.classList.toggle('err')
+            },2000)
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+function logInTrue(data){
+    let indexCard = gEI('index-card');
+
+    indexContainer.classList.toggle('main');
+    indexCard.classList.toggle('hide')
+    setTimeout(()=>{
+        indexContainer.innerHTML = '';
+        setMainScreen(data);
+    },500)
+}
+
+function checkNameSubmit(e){
+    let endSpaces = / \s$/;
+    let hasSpace = endSpaces.test(e.target.value);
+
+    if(hasSpace){
+        let e_ = e.target.value.replace('  ', '')
+        e.target.value = e_
+    }
+}
+
+function signUpHo(){
+    let endSpace = /\s$/;
+
+    let nameAccount = gEI('name')
+
+    if(nameAccount.test(endSpace)){
+        let n_ = nameAccount.value.slice(nameAccount.length-1,1)
+        nameAccount.value = n_
+    }
+    console.log(nameAccount.value)
+
+}
+
+function goBackLogIn(e){
+    let submitCard = gEI('submit-card');
+    let indexCard = gEI('index-card');
+    submitCard.classList.toggle('outright');
+    indexContainer.classList.toggle('submit');
+    indexContainer.classList.toggle('return');
+    setTimeout(()=>{
+        submitCard.classList.toggle('none');
+        submitCard.classList.toggle('outright');
+        indexCard.classList.toggle('none')
+        indexCard.classList.toggle('inleft')
+        setTimeout(()=>{
+            indexContainer.classList.toggle('return');
+            indexCard.classList.toggle('inleft')
+        },500)
+    },500)
+
+}
+
+async function setMainScreen(data_){
+    try {
+        const {data} = await axios.get('/assets/snippets/mainCard.html');
+        indexContainer.innerHTML = data
+        let quote = gEI('quote');
+        quote.innerHTML = data_.quotes
+
+        loadCampaigns();
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+function onWasHovered(e){
+    e.target.classList.toggle('wasHovered')
+    setTimeout(()=>{
+        e.target.classList.toggle('wasHovered')
+    },500)
+}
+
+// Load Campaigns stored in User
+
+async function loadCampaigns(){
+    let mapsContainer = gEI('maps-campaigns');
+    try {
+        const {data} = await axios.get('/getCampaigns')
+
+        // Add Campaigns to the List
+        
+        let campaigns = data.campaigns
+
+        for(i=0;i<campaigns.length;i++){
+            let a_ = cE('a')
+            a_.id = campaigns[i].name;
+            a_.className = 'campaign'
+            a_.innerHTML = `<img name='${campaigns[i].name}' src='/preview/${campaigns[i].maps[0]}' class="campaign-img">
+            <div name='${campaigns[i].name}' class="campaign-text-container">
+                <h1 name='${campaigns[i].name}' class="campaign-item-hero">${campaigns[i].name}</h1>
+                <p name='${campaigns[i].name}' class='description'>${campaigns[i].description}</p>
+            </div>
+            <div name='${campaigns[i].name}' class="campaign-date-container">
+                <p name='${campaigns[i].name}' class="date">${campaigns[i].date.split('T')[0]}</p>
+                <p name='${campaigns[i].name}' class='time'>${campaigns[i].time.split(' ')[4]} PT</p>
+            </div>`;
+            a_.onmouseleave = onWasHovered;
+            a_.onclick = goToCampaign;
+            mapsContainer.insertAdjacentElement('afterbegin' ,a_)
+        }
+    } catch (error) {
+        console.log(error)
+    }
+};
+
+// Load Campaign
+
+function goToCampaign(e){
+
+    if(e.target.tagName === "A"){
+        console.log(e.target.id)
+        window.location.href = `/campaign/${e.target.id}`
+    }else{
+        if(e.target.parentElement.tagName != "A"){
+            console.log(e.target.parentElement.parentElement.id)
+            window.location.href = `/campaign/${e.target.parentElement.parentElement.id}`
+        }else{
+            console.log(e.target.parentElement.id)
+            window.location.href = `/campaign/${e.target.parentElement.id}`
+        }
+    }
+    // window.location.href = `/campaign/${e.target.parentElement.id}`
+}
+
+// Make New Campaign
+
+function makeNewCampaign(){
+    window.location.href = '/new-campaign'
+}
 
