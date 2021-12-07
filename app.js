@@ -338,8 +338,9 @@ router.post('/addMaps', upload_.array('map'), (req,res,next)=>{
 })
 
 router.post('/createCampaign', (req,res,next)=>{
-    console.log(req.body.campaign)
+    console.log(req.body.campaignName)
     console.log(req.body.description)
+    console.lot(req.user)
 
     let campaigns = {
         name: String,
