@@ -31,6 +31,7 @@ const PORT = process.env.PORT || 443;
 
 const upload = multer({ storage: storage });
 const upload_ = multer({ dest: __dirname + '/public/maps/' })
+
 const { diskStorage } = require('multer');
 
 const sessionStore = MongoStore.create({
@@ -48,8 +49,8 @@ app.use(compression())
 app.use(expressEJSLayouts)
 app.set('view engine', 'ejs')
 app.set('layout', 'layout1')
-app.use('/assets' ,express.static(__dirname + './assets'))
-app.use('/' ,express.static(__dirname + './public'))
+app.use('/assets' ,express.static(__dirname + '/assets'))
+app.use('/' ,express.static(__dirname + '/public'))
 app.use(express.json({ limit: '50mb'}));
 app.use(express.urlencoded({ limit: '50mb', extended: true})); 
 
