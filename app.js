@@ -102,7 +102,7 @@ router.get('/campaign/:id', (req,res,next)=>{
     })
 
     let dmFile = fs.readFileSync('./assets/snippets/dmFile.html')
-    res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile})
+    res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id})
 
 
 })

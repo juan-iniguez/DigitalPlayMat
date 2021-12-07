@@ -1,3 +1,4 @@
 node_modules/
 keys/
 .env
+public/maps/

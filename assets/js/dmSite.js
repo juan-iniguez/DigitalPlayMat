@@ -161,7 +161,7 @@ squareWidthInput.addEventListener('change', (e)=>{
 function getSquares(){
     sW = canvas.width/tileSize;
     sH = canvas.height/tileSize;
-    squares.innerHTML = `${sW}x${sH} Squares Map`
+    // squares.innerHTML = `${sW}x${sH} Squares Map`
 }
 getSquares();
 
@@ -590,19 +590,19 @@ function noteOnMouseMove(e){
         // WidthXHeight
 
         if(dx > 0){
-            w = Math.ceil(dx/70) * tileSize
+            w = Math.ceil(dx/tileSize) * tileSize
             // console.log(w)
         }else if(dx<0){
-            w = Math.floor(dx/70) * tileSize
+            w = Math.floor(dx/tileSize) * tileSize
             // console.log(w)
         }
         
         if(dy > 0){
-            h = Math.ceil(dy/70) * tileSize
+            h = Math.ceil(dy/tileSize) * tileSize
             // console.log(h)
 
         }else if(dy<0){
-            h = Math.floor(dy/70) * tileSize
+            h = Math.floor(dy/tileSize) * tileSize
             // console.log(h)
         }
 

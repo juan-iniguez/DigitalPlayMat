@@ -28,6 +28,15 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
+#linkshare{
+    color: white;
+    background-color: #00000080;
+    border: solid #f0151585 2px;
+    width: fit-content;
+    font-size: 1rem;
+    cursor: text;
+}
+
 #squares{
     width: fit-content;
     color: rgba(255, 255, 255, 0.363);
@@ -152,6 +161,7 @@ input::-webkit-inner-spin-button {
 }
 
 .label{
+    margin-top: 1rem;
     font-size: 2rem;
     color: white;
 }
