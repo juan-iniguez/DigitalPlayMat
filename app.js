@@ -273,8 +273,8 @@ router.post('/tokens-upload', upload.array('tokens'), (req,res,next)=>{
 router.post('/addMap', upload_.single('map'), (req,res,next)=>{
     let mapImage = req.file
     let mimetype = mapImage.mimetype.split('/')[1]
-    let Olddest = __dirname + req.file.destination + req.file.filename
-    let newDest = __dirname + req.file.destination + req.file.originalname + '.' + mimetype
+    let Olddest = req.file.destination + req.file.filename
+    let newDest = req.file.destination + req.file.originalname + '.' + mimetype
 
     fs.rename( Olddest , newDest, (err)=>{
         if(err){
@@ -299,8 +299,8 @@ router.post('/addMaps', upload_.array('map'), (req,res,next)=>{
 
     for(let el of maps){
 
-        let Olddest = __dirname + el.destination + el.filename
-        let newDest = __dirname +  el.destination + el.originalname + '.' + el.mimetype.split('/')[1]
+        let Olddest = el.destination + el.filename
+        let newDest = el.destination + el.originalname + '.' + el.mimetype.split('/')[1]
     
         fs.rename( Olddest , newDest, (err)=>{
             if(err){
