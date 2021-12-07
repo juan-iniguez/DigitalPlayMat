@@ -1,8 +1,20 @@
+// Shorten getElements
+let gEI = function(element){
+    return document.getElementById(element)
+};
+let gEC = function(element){
+    return document.getElementsByClassName(element)
+};
+let cE = function(element){
+    return document.createElement(element)
+};
+
 const canvas = document.getElementById('map')
 let c = canvas.getContext('2d');
 const squares = document.getElementById('squares');
 const mapName = document.getElementById('map-name')
 const menu = document.getElementById('menu');
+const settings = gEI('settings-')
 const menuBtnOpen = document.getElementById('settings');
 const menuBtnClose = document.getElementById('settings-close')
 const tileSizeInput = document.getElementById('tile-size')
@@ -14,34 +26,69 @@ const canvasContainer = document.getElementById('canvas-container')
 const canvasMain = document.getElementById('canvas-main')
 
 const socket = io();
-
+let privateChat = undefined;
 socket.on('connect', ()=>{
     console.log(`SessionId: ${socket.id}`)
+    privateChat = socket.id;
 })
 
 socket.on('message', message=>{
     console.log(message)
 })
 
+socket.on('room', message=>{
+    console.log(message)
+})
 
 menuBtnOpen.addEventListener('click', (e)=>{
-        menu.style = '';
+        settings.style = '';
         setTimeout(()=>{
-            menu.classList.toggle('show')
+            settings.classList.toggle('show')
         }, 100)
 })
 
 menuBtnClose.addEventListener('click', ()=>{
     setTimeout(()=>{
-        menu.style = 'display: none'
+        settings.style = 'display: none'
     }, 300)
-    menu.classList.toggle('show')
+    settings.classList.toggle('show')
 })
 
 // Disable Context Menu for Canvas
 
 canvas.oncontextmenu = function(e) {
     e.preventDefault(); e.stopPropagation(); 
+}
+
+// Menu OPENING and CLOSING Actions
+
+function menuListenersOn(){
+    menu.addEventListener("click", openMenu);
+}
+menuListenersOn();
+
+function menuListenersOff(){
+    menu.removeEventListener("click", openMenu);
+}
+
+function openMenu(){
+    let optionsContainer = gEI('options-container');
+    let top = gEI('top');
+    top.style = 'width:100%;';
+    optionsContainer.style = 'width:100%'
+    menu.classList.toggle('open')
+    menu.onclick = closeMenu;
+    menuListenersOff();
+}
+
+function closeMenu(){
+    let optionsContainer = gEI('options-container');
+    let top = gEI('top');
+    top.style = '';
+    optionsContainer.style = ''
+    menu.classList.toggle('open')
+    menu.onclick = ''
+    menuListenersOn();
 }
 
 let tileStandard = 70
@@ -387,9 +434,9 @@ let windowMousePos = {
 
 canvas.addEventListener('mousemove', (e)=>{
     if(isDown){
-
-        onMouseMove(e);
-
+        if(e.buttons === 2){
+            onMouseMove(e);
+        }
     }
 })
 
@@ -410,11 +457,16 @@ let mousePosition = {
 }
 
 function onMouseClick(e){
+    // console.log(e.buttons)
+    if(e.buttons === 2){
+        // console.log('eoj')
 
     // get mouse coordinates
 
     mouseX=e.clientX;
     mouseY=e.clientY;
+    // console.log(mouseY, mouseX)
+
     
     // set the starting drag position 
     // this is needed in mousemove to determine how far we have dragged
@@ -423,7 +475,7 @@ function onMouseClick(e){
     mousePosition.y=mouseY;
 
     isDown = true
-    
+    }
 }
 
 let tilePosition = {
@@ -433,7 +485,7 @@ let tilePosition = {
 
 function onMouseMove(e){
 
-    if(e.buttons === 1){
+    if(e.buttons === 2){
         if(imgPos.x <= 0 && imgPos.y <= 0){
             if(imgPos.x > -img.width*imgScale + canvas.width && imgPos.y > -img.height*imgScale + canvas.height){
                 var dx=e.movementX;
@@ -1207,12 +1259,12 @@ function addPlayerImgPreview(e){
 
                         // console.log(data)
 
-                        referenceSelected.src = data;
+                        referenceSelected.src = data.URI;
                         if(preview.className != 'tokenImg-label preview'){
                             preview.classList.toggle('preview')
                         }
                         preview.innerHTML = ''
-                        preview.style = `background-image: url('${data}')`;
+                        preview.style = `background-image: url('${data.URI}')`;
 
                     } catch (error) {
                         console.log(error)
@@ -1696,6 +1748,7 @@ function onTokenDown(e){
 
     if(isTokenReselect){
         canvas.removeEventListener('mousemove', reselectTokenOnMove)
+        canvas.removeEventListener('mouseup', onTokenDown)
         isTokenReselect = false
     }
 
@@ -1831,7 +1884,7 @@ function reselectToken(e){
     isTokenReselect = true
     isTokenSelected = true
     
-    canvas.addEventListener('mousedown', onTokenDown)
+    canvas.addEventListener('mouseup', onTokenDown)
     canvas.addEventListener('mousemove', reselectTokenOnMove)
 }
 
@@ -1972,7 +2025,7 @@ function tokenCMOnDown(e){
             cMenu.className = 'cMenu'
             cMenu.id = 'cMenu'
             cMenu.name = tokenPos[whichToken(e)].player
-            cMenu.style = `top:${y}px;left:${x+tileSize}px;width:${tileSize*1.5}px;height:fit-content;`
+            cMenu.style = `top:${y}px;left:${x+tileSize}px;width:fit-content;height:fit-content;`
             canvasMain.insertAdjacentElement('afterbegin' ,cMenu);
     
             let button1 = document.createElement('a')
@@ -2005,3 +2058,31 @@ function tokenCMOnDown(e){
         }    
     }
 }
+
+/* ADDITIONAL DM SITE CODE */
+
+let chat = gEI('chat');
+let chatContainer = gEI('chat-main-container');
+let chatHideIcon = gEI('chat-hide-icon');
+
+function chatListenerOn(){
+    chat.addEventListener('click', onChatMouseDown)
+}
+chatListenerOn();
+
+function chatListenerOff(){
+    chat.removeEventListener('click', onChatMouseDown)
+}
+
+function onChatIconMouseDown(e){
+    chatContainer.classList.toggle('hide')
+}
+
+function onChatMouseDown(){
+    closeMenu();
+    chatContainer.classList.toggle('hide')
+}
+
+/* PLAYER SITE
+THIS IS FUNCTIONALITY TO PLAYERS ONLY */
+

@@ -17,6 +17,7 @@ const MongoStore = require('connect-mongo')
 const mongoose = require('mongoose')
 const Maps = connection.models.Maps;
 const User = connection.models.User;
+const Campaign = connection.models.Campaign;
 const app = express();
 
 const options = {
@@ -83,6 +84,27 @@ app.use((req, res, next) => {
 
 app.use(router)
 
+io.on('connection', socket=>{
+    socket.emit('message', 'You are connected...')
+    socket.on('send-message', (message, user) =>{
+        console.log(message)
+        // ALL UNTIL I GET THE TXT MESSAGING WORKING
+        // io.emit("receive-message", message)
+        socket.broadcast.emit("receive-message", message , user)
+    })
+    socket.on('join-room', room=>{
+        socket.join(room)
+    })
+    socket.on('new-user', message=>{
+        socket.broadcast.emit("user-connected", message)
+        // io.emit('user-connected', message)
+    })
+    socket.on('user-list', Users=>{
+        console.log(Users)
+        socket.broadcast.emit("phonebook", Users)
+    })
+})
+
 // Routing GET REQUESTS
 
 router.get('/', (req,res,next)=>{
@@ -96,14 +118,8 @@ router.get('/', (req,res,next)=>{
 router.get('/campaign/:id', (req,res,next)=>{
     // Load an Already made campaign
 
-    io.on('connection', socket=>{
-        socket.emit('message', 'You are connected...')
-        console.log(socket.id)
-    })
-
     let dmFile = fs.readFileSync('./assets/snippets/dmFile.html')
     res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id})
-
 
 })
 
@@ -127,8 +143,10 @@ router.get('/getCampaigns', (req,res,next)=>{
     res.send(data)
 })
 
-router.get('/player/:id', (req,res,next)=>{
+router.get('/player/:player/:id', (req,res,next)=>{
 
+    let dmFile = fs.readFileSync('./assets/snippets/playerCSS.html')
+    res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id})
 })
 
 // MAKE SCROLLING TO ZOOM OUT DONE
@@ -169,6 +187,11 @@ router.get('/preview/:id', (req,res,next)=>{
     })
 
 
+})
+
+router.get('/getUsername', (req,res,next)=>{
+    let Username = req.user.name
+    res.send({Username: Username})
 })
 
 // POST REQUESTS 
@@ -326,15 +349,34 @@ router.post('/createCampaign', (req,res,next)=>{
         time: String,
     }
 
+    let campaign_ = {
+        campaign: String,
+        description: String,
+        maps: [],
+        dm_notes: [],
+        player_notes:[],
+        mapNotes: [],
+        mapBO: [],
+        players: [],    
+    }
+
     campaigns.name = req.body.campaignName;
     campaigns.description = req.body.description;
     campaigns.maps = req.body.maps;
     campaigns.date = new Date();
     campaigns.time = campaigns.date;
 
+    campaign_.campaign = req.body.campaignName;
+    campaign_.description = req.body.description;
+    campaign_.maps = req.body.maps;
+
+
     async function uploadUserDB(){
         try {
+            const campaign = new Campaign(campaign_)
             const user = await User.findByIdAndUpdate(req.user._id, {$push: {campaigns: campaigns}});
+            let save = await campaign.save();
+            campaign.save();
             res.send(user)
         } catch (error) {
             console.log(error)
@@ -347,21 +389,24 @@ router.post('/createCampaign', (req,res,next)=>{
 
 router.post('/getMainCanvas', (req,res,next)=>{
     // console.log(req.body)
-    console.log(req.user)
-    let index = undefined;
 
-    for(let el of req.user.campaigns){
-        if(el.name === req.body.campaign){
-            index = req.user.campaigns.indexOf(el)
+    async function getCampaign(){
+        try {
+            const campaign = await Campaign.findOne({campaign: req.body.campaign})
+            console.log(campaign.campaign)
+            let data = {
+                img: campaign.maps[0],
+                name: campaign.maps[0].split('.')[0],
+            }
+
+            res.send(data)
+
+        } catch (error) {
+            console.log(error)
         }
     }
+    getCampaign();
 
-    let data = {
-        img:req.user.campaigns[index].maps[0],
-        name:req.user.campaigns[index].maps[0].split('.')[0]
-    }
-
-    res.send(data)
 })
 
 server.listen(PORT || 443, ()=>{console.log(`Server running on port ${PORT}`)})

@@ -36,9 +36,20 @@ const mapSchema = new mongoose.Schema({
     mimeType: String,
 });
 
+const campaignSchema = new mongoose.Schema({
+    campaign: String,
+    description: String,
+    maps: [],
+    dm_notes: [],
+    player_notes:[],
+    mapNotes: [],
+    mapBO: [],
+    players: [],
+})
 
 const Maps = connection.model('Maps', mapSchema);
 const User = connection.model('User', userSchema);
+const Campaign = connection.model('Campaign', campaignSchema);
 
 // Expose the connection
 module.exports = connection;
