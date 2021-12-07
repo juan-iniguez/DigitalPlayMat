@@ -27,18 +27,57 @@ const canvasMain = document.getElementById('canvas-main')
 
 const socket = io();
 let privateChat = undefined;
-socket.on('connect', ()=>{
-    console.log(`SessionId: ${socket.id}`)
-    privateChat = socket.id;
+let allChat = window.location.href.split('/')[5];
+let currentRoom = allChat;
+let Username = undefined;
+let UsersConnected = [];
+let isNewConnect = true
+
+/* First part is When User connects, they emit a signal
+Second part is when Server get's Signal, it sends broadcast to other Users
+The broadcast gives them an Instruction to send their usernames back to Server 
+Then back to the Original User*/
+
+async function getUsername(){
+    try {
+        const {data} = await axios.get('/getUsername')
+        Username = data.Username
+
+        connectToSocket(data);
+        UsersConnected.push(data.Username)
+        
+    } catch (error) {
+        console.log(error)
+    }
+}
+getUsername(); 
+
+function connectToSocket(data){
+    socket.on('connect', ()=>{
+        console.log(`SessionId: ${socket.id}`)
+        privateChat = socket.id;
+        let u_ = data.Username
+        if(isNewConnect){
+            socket.emit('new-user', u_)
+        }
+    })
+    
+    socket.on('message', message=>{
+        console.log(message)
+    })
+}
+socket.on('phonebook', user_=>{
+    if(isNewConnect){
+        UsersConnected = user_
+        phonebook(user_)
+    }
+})
+socket.on('user-connected', message=>{
+    sysMessage(message);
+    newUserConnects(message)
 })
 
-socket.on('message', message=>{
-    console.log(message)
-})
 
-socket.on('room', message=>{
-    console.log(message)
-})
 
 menuBtnOpen.addEventListener('click', (e)=>{
         settings.style = '';
@@ -241,9 +280,6 @@ async function getCurrentMap(){
 getCurrentMap();
 
 
-// img.src = '/img/deftera.png';
-// img.name = 'Deftera, Kingdom of Eedra'
-
 // Switches
 
 let isDown = false;
@@ -253,6 +289,7 @@ let isOnNote = false;
 let isTokenSelected = false;
 let areTokensOnMap = false;
 let isHoveredOver = false;
+let isAutoScrollDown = true;
 
 // Img
 
@@ -2061,6 +2098,8 @@ function tokenCMOnDown(e){
 
 /* ADDITIONAL DM SITE CODE */
 
+// Chat MSGS
+
 let chat = gEI('chat');
 let chatContainer = gEI('chat-main-container');
 let chatHideIcon = gEI('chat-hide-icon');
@@ -2082,6 +2121,168 @@ function onChatMouseDown(){
     closeMenu();
     chatContainer.classList.toggle('hide')
 }
+
+// Chat engine to connect players
+
+let sendChat = gEI('send-chat');
+sendChat.onclick = onChatSubmit;
+let chatInputMsg = gEI('chat-textarea');
+chatInputMsg.oninput = chatTextAreaCheck;
+let chatBox = gEI('chat-box')
+
+// Switches
+
+let isCodeOn = false;
+
+function chatTextAreaCheck(e){
+    let message = chatInputMsg.value
+    console.log(e.data , e.inputType)
+    console.log(e)
+    let room = currentRoom 
+    // Press "Enter"
+    if(e.data === null && e.inputType === 'insertLineBreak'){
+
+        if(chatInputMsg.value.length <= 1){
+            console.log('no')
+            chatInputMsg.value = '';
+
+        }else{
+            console.log('hi')
+            console.log(message.length)
+            sendMessage(room, message)
+        }
+    }
+}
+
+function onChatSubmit(e){
+    let message = chatInputMsg.value;
+    let room = currentRoom;
+    console.log(e.data , e.inputType)
+    console.log(e)
+
+    if(message === '' || !message){
+        return
+    }else{
+        sendMessage(room, message)
+    }
+}
+
+// MESSAGE SENDER
+
+chatBox.addEventListener('scroll', stopAutoScroll )
+
+function sendMessage(room, message){
+    console.log(message)
+    if(!message || message === ''){
+        console.log('no')
+        chatInputMsg.value = '';
+    }else{
+        socket.emit('join-room', room);
+        socket.emit('send-message', message, Username);
+        chatInputMsg.value = '';
+    
+        let p_ = cE('p');
+        p_.className = 'chat-msg user';
+        p_.innerHTML = `<span style="color: #fffb00;">${Username}: </span>${message}`
+        chatBox.appendChild(p_);
+        if(isAutoScrollDown){
+            gotoBottom(chatBox.id);
+        }
+    }
+}
+
+// System Messages
+function sysMessage(message){
+    let p_ = cE('p');
+    p_.className = 'chat-msg bot';
+    p_.innerHTML = `<span style="color: #cacaca;">Bot:</span>${message} has Joined!`
+    chatBox.appendChild(p_);
+    if(isAutoScrollDown){
+        gotoBottom(chatBox.id);
+    }
+}
+
+// New User Entered
+
+function newUserConnects(user){
+    let chatConvo = gEI('chat-convo-container');
+    let newTab = cE('a');
+    let isAlreadyConnected = false
+
+    for(let el of UsersConnected){
+        if(el === user){
+            isAlreadyConnected = true
+        }
+    }
+    socket.emit('user-list', UsersConnected)
+    
+    if(!isAlreadyConnected){
+        newTab.className = 'chat-convo';
+        newTab.innerHTML = user.split(' ')[0]
+        newTab.name = user;
+        UsersConnected.push(user);
+        newTab.onclick = selectConvo;
+        chatConvo.insertAdjacentElement('beforeend' ,newTab)
+    }
+}
+
+// PhoneBook Calls in with All players Sync
+
+function phonebook(u_){
+    if(isNewConnect){
+        // let chatConvos = gEC('chat-convo');
+        for(let ol of UsersConnected){
+            if(ol != Username){
+                let test = / /;
+                isNewConnect = false
+        
+                let chatConvo = gEI('chat-convo-container');
+                let newTab = cE('a');        
+                newTab.className = 'chat-convo';
+                newTab.innerHTML = test.test(ol)?ol.split(' ')[0]:ol
+                newTab.name = ol;
+                newTab.onclick = selectConvo;
+                chatConvo.insertAdjacentElement('beforeend' ,newTab)
+            }
+        }
+    }
+}
+
+
+// Receive Messages
+
+socket.on('receive-message', (message, user)=>{
+    // console.log(message)
+    let p_ = cE('p');
+    p_.className = 'chat-msg';
+    p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
+    chatBox.appendChild(p_);
+    if(isAutoScrollDown){
+        gotoBottom(chatBox.id);
+    }
+})
+
+function selectConvo(e){
+    console.log(e.target.name)
+}
+
+// ScrollDown Msgs
+
+function stopAutoScroll(e){
+    console.log(e.target.scrollTop ,e.target.scrollTopMax)
+    setTimeout(()=>{
+        if(e.target.scrollTop < e.target.scrollTopMax-90){
+            isAutoScrollDown = false;
+        }else if(e.target.scrollTop === e.target.scrollTopMax){
+            isAutoScrollDown = true;
+        }
+    }, 500)
+}
+
+function gotoBottom(id){
+    var element = document.getElementById(id);
+    element.scrollTop = element.scrollHeight - element.clientHeight;
+ }
 
 /* PLAYER SITE
 THIS IS FUNCTIONALITY TO PLAYERS ONLY */
