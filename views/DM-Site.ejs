@@ -18,22 +18,22 @@
             </div>
             <div  id='chat-main-container' class="chat-main-container hide">
                 <div class="chat-buttons-container">
-                    <div class="chat-convo-container">
+                    <div id='chat-convo-container' class="chat-convo-container">
                         <!-- <a id='chat-convo' class="chat-convo">Thyuss</a> -->
-                        <a id='chat-convo' class="chat-convo selected">Renashi</a>
+                        <a id='chat-convo' class="chat-convo selected" name="<%- id %>">All</a>
                         <!-- <a id='chat-convo' class="chat-convo">DM</a> -->
                         <!-- <a id='chat-convo' class="chat-convo">Ayoocee</a> -->
                     </div>
                     <a id='chat-hide-icon' class="chat-hide-icon" onclick="onChatIconMouseDown(event)"></a>
                 </div>
                 <div id='chat-container' class="chat-container">
-                    <div class="chat-box">
-                        <p class="chat-msg"><span style="color: tomato;">Renashi: </span>Hello there!</p>
-                        <p class="chat-msg"><span style="color: yellowgreen;">Renashi: </span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    <div id='<%- id %>' class="chat-box">
+                        <!-- <p class="chat-msg"><span style="color: tomato;">Renashi: </span>Hello there!</p> -->
+                        <!-- <p class="chat-msg"><span style="color: yellowgreen;">Renashi: </span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p> -->
                     </div>
                     <div class="chat-inputs">
-                        <textarea class='chat-textarea' placeholder="Chat here..."></textarea>
-                        <a class='send-chat'>Send</a>
+                        <textarea id='chat-textarea' class='chat-textarea' placeholder="Chat here..."></textarea>
+                        <a id='send-chat' class='send-chat'>Send</a>
                     </div>
                 </div>
             </div>
@@ -46,7 +46,7 @@
         <label class='label'>Squares Height</label>
         <input id='sq-h' type="number" class="sq h" value="1">
         <label class="label">Link to Share to Players</label>
-        <input id='linkshare' type="text" disabled value="https://dndvibes.com/player/<%- id %>">
+        <input id='linkshare' type="text" value="https://dndvibes.com/player/<%- from_user %>/<%- id %>" disabled>
     </div>
 </div>
-<script src="/assets/js/playerSite.js"></script>
+<script src="/assets/js/dmSite.js"></script>

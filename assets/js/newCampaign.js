@@ -100,25 +100,32 @@ function mapMenuActivate(){
             description: description.value,
         }
         if(isNames && campaignName.value != '' && description.value != ''){
-            async function sendMultipleMaps(){
-                try {
-                    const {data} = await axios.post('/addMaps', form)
-                    const create = await axios.post('/createCampaign', createDP)
-                    console.log(data)
-                    console.log(create.data)
-    
-                    if(create.data){
-                        window.location.href = `/campaign/${campaignName.value}`
-                    }else{
-                        console.log(data)
+            mainContainer.classList.toggle('hide')
+            setTimeout(()=>{
+                mainContainer.remove();
+                let loader = cE('div');
+                loader.className = 'loading end'
+                document.body.appendChild(loader)
+                async function sendMultipleMaps(){
+                    try {
+                        const {data} = await axios.post('/addMaps', form)
+                        const create = await axios.post('/createCampaign', createDP)
+                        // console.log(data)
+                        // console.log(create.data)
+        
+                        if(create.data){
+                            window.location.href = `/campaign/${campaignName.value}`
+                        }else{
+                            console.log(data)
+                        }
+        
+        
+                    } catch (error) {
+                        console.log(error)
                     }
-    
-    
-                } catch (error) {
-                    console.log(error)
                 }
-            }
-            sendMultipleMaps();
+                sendMultipleMaps();
+            },300)
         }else{
             message.innerHTML = 'Names are missing'
             message.classList.toggle('error');
@@ -169,23 +176,31 @@ function mapMenuActivate(){
             let form = new FormData();
             form.append('map', files, name.value);
             createDP.maps.push(name.value + '.' + files.type.split('/')[1]);
-            async function menuSend(){
-                try {
-                    const {data} = await axios.post('/addMap', form)
-                    const create = await axios.post('/createCampaign', createDP)
-                    console.log(data)
-                    console.log(create.data)
-                    if(create.data){
-                        window.location.href = `/campaign/${campaignName.value}`
-                    }else{
+            mainContainer.classList.toggle('hide');
+            setTimeout(()=>{
+                mainContainer.remove();
+                let loader = cE('div');
+                loader.className = 'loading hide';
+                document.body.appendChild(loader)
+                loader.className = 'loading end';
+                async function campaignSend(){
+                    try {
+                        const {data} = await axios.post('/addMap', form)
+                        const create = await axios.post('/createCampaign', createDP)
                         console.log(data)
+                        console.log(create.data)
+                        if(create.data){
+                            window.location.href = `/campaign/${campaignName.value}`
+                        }else{
+                            console.log(data)
+                        }
+                        
+                    } catch (error) {
+                        console.log(error)
                     }
-                    
-                } catch (error) {
-                    console.log(error)
                 }
-            }
-            menuSend();
+                campaignSend();
+            },300)
         }
     }
 }

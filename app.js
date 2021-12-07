@@ -119,7 +119,7 @@ router.get('/campaign/:id', (req,res,next)=>{
     // Load an Already made campaign
 
     let dmFile = fs.readFileSync('./assets/snippets/dmFile.html')
-    res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id})
+    res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id, from_user: req.user.name})
 
 })
 

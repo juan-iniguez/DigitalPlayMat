@@ -1,3 +1,5 @@
+window.addEventListener("contextmenu", e => e.preventDefault());
+
 // Shorten getElements
 let gEI = function(element){
     return document.getElementById(element)
@@ -24,6 +26,8 @@ const notesBtn = document.getElementById('notes');
 const mainContainer = document.getElementById('main-container')
 const canvasContainer = document.getElementById('canvas-container')
 const canvasMain = document.getElementById('canvas-main')
+const linkShare = gEI('linkshare');
+linkShare.value = window.location.href
 
 const socket = io();
 let privateChat = undefined;
@@ -31,7 +35,11 @@ let allChat = window.location.href.split('/')[5];
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
+let Chatboxes = [];
 let isNewConnect = true
+
+// Add current Chat to Chatboxes
+Chatboxes.push(allChat)
 
 /* First part is When User connects, they emit a signal
 Second part is when Server get's Signal, it sends broadcast to other Users
@@ -2128,7 +2136,11 @@ let sendChat = gEI('send-chat');
 sendChat.onclick = onChatSubmit;
 let chatInputMsg = gEI('chat-textarea');
 chatInputMsg.oninput = chatTextAreaCheck;
-let chatBox = gEI('chat-box')
+let allChatTab = gEC('chat-convo selected');
+allChatTab[0].onclick = selectConvo;
+allChatTab[0].name = allChat;
+
+
 
 // Switches
 
@@ -2169,9 +2181,16 @@ function onChatSubmit(e){
 
 // MESSAGE SENDER
 
-chatBox.addEventListener('scroll', stopAutoScroll )
+let allChatBox = gEI(allChat)
+allChatBox.addEventListener('scroll', stopAutoScroll )
 
 function sendMessage(room, message){
+    let chatBox
+    if(currentRoom === allChat){
+        chatBox = gEI(allChat)
+    }else{
+        chatBox = gEI(room)
+    }
     console.log(message)
     if(!message || message === ''){
         console.log('no')
@@ -2193,12 +2212,13 @@ function sendMessage(room, message){
 
 // System Messages
 function sysMessage(message){
+    let currentChatbox = gEI(currentRoom);
     let p_ = cE('p');
     p_.className = 'chat-msg bot';
     p_.innerHTML = `<span style="color: #cacaca;">Bot:</span>${message} has Joined!`
-    chatBox.appendChild(p_);
+    currentChatbox.appendChild(p_);
     if(isAutoScrollDown){
-        gotoBottom(chatBox.id);
+        gotoBottom(currentChatbox.id);
     }
 }
 
@@ -2253,17 +2273,94 @@ function phonebook(u_){
 
 socket.on('receive-message', (message, user)=>{
     // console.log(message)
+    let currentChatbox = gEI(user);
     let p_ = cE('p');
     p_.className = 'chat-msg';
     p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
-    chatBox.appendChild(p_);
+    currentChatbox.appendChild(p_);
     if(isAutoScrollDown){
-        gotoBottom(chatBox.id);
+        gotoBottom(currentChatbox.id);
     }
 })
 
+// Change Room
 function selectConvo(e){
     console.log(e.target.name)
+    let isAlreadyChatbox = false;
+    let selectedChatBox = undefined; 
+    let chatCont_ = gEI('chat-container')
+
+    for(let el of Chatboxes){
+        if(el === e.target.name){
+            isAlreadyChatbox = true;
+            selectedChatBox = el;
+            console.log('Yes')
+        }
+    }
+    if(isAlreadyChatbox){
+        // Select Tab that was Active
+        let currentChatboxName = gEC('chat-convo selected')
+        
+        // Get Current Chat Box
+        let currentChatBox= gEI(currentChatboxName[0].name)
+        
+        // Get all ChatBoxes by CLASS
+        let allChatTabs = gEC('chat-convo');
+        let targetChatbox = gEI(e.target.name);
+
+        for(let el of allChatTabs){
+            if(el.name === e.target.name){
+                currentChatboxName[0].classList.toggle('selected');
+                el.classList.toggle('selected')
+                currentChatBox.classList.toggle('hide')
+                console.log(el.name)
+            }
+        }
+        targetChatbox.classList.toggle('hide')
+
+        // Hide the Current Chat Box
+
+        currentRoom = e.target.name;
+    }else{
+        // Select Tab that was Active
+        let currentChatboxName = gEC('chat-convo selected')
+        
+        // Get Current Chat Box
+        let currentChatBox= gEI(currentChatboxName[0].name)
+        
+        
+        // Hide the Current Chat Box
+        currentChatBox.classList.toggle('hide');
+        
+        // Create New Chat Box for newly made Chat
+        let chatbox = cE('div');
+        chatbox.id = e.target.name;
+        chatbox.className = 'chat-box';
+        chatbox.onscroll = stopAutoScroll;
+        
+        // Push to Chatboxes
+        Chatboxes.push(e.target.name)
+        
+        // Deselect Curretn Chat Box
+        currentChatboxName[0].classList.toggle('selected')
+        
+        // Add New Chat box
+        chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox);
+
+        // Change the current Room
+        currentRoom = e.target.name;
+
+        // Highlight the Now Current Tab
+        let tabs_ = gEC('chat-convo');
+        for(let el of tabs_){
+            if(el.name === e.target.name){
+                el.classList.toggle('selected')
+            }
+        }
+    }
+
+
+
 }
 
 // ScrollDown Msgs
@@ -2282,7 +2379,7 @@ function stopAutoScroll(e){
 function gotoBottom(id){
     var element = document.getElementById(id);
     element.scrollTop = element.scrollHeight - element.clientHeight;
- }
+}
 
 /* PLAYER SITE
 THIS IS FUNCTIONALITY TO PLAYERS ONLY */

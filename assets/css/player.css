@@ -1130,6 +1130,11 @@ input::-webkit-inner-spin-button {
     scrollbar-color: rgb(14, 101, 109) rgba(24, 24, 24, 0.657);
 }
 
+.chat-box.hide{
+    display: none;
+}
+
+
 .chat-inputs{
     display: flex;
     flex-direction: row;
