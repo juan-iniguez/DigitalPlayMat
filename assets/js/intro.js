@@ -24,7 +24,6 @@ socket.on('message', message=>{
 })
 
 // Brief Animation
-
 setTimeout(()=>{
     loading.classList.toggle('hide')
     introH1.classList.toggle('hide')
@@ -42,7 +41,6 @@ setTimeout(()=>{
 
 
 // Add The Menu-grid for Maps Uploads
-
 function addMapMenu(){
     introH2.remove();
     introH1.innerHTML = 'Start by adding a Name and Description'
@@ -61,9 +59,6 @@ function addMapMenu(){
             menuContainer.innerHTML = data;
             let mapMenu = document.getElementById('map')
             let mapItem = document.getElementById('map-item')
-            let mapName = document.getElementById('map-name')
-            mapName.addEventListener('input', preventCharacters)
-            mapItem.name = 0
             mapMenu.onchange = mapPreview
 
         } catch (error) {
@@ -74,7 +69,6 @@ function addMapMenu(){
 }
 
 // Map Menu Submit function
-
 function mapMenuActivate(){
     let message = document.getElementById('message');
     let campaignName = gEI('campaign-name')
@@ -90,13 +84,14 @@ function mapMenuActivate(){
     if(maps_.length > 1){
         // TODO: Name Inputs put them into and ARRAY
         let mapNames = document.getElementsByClassName('map-name');
+        console.log(maps_)
 
         let form = new FormData();
         for(i=0;i<maps_.length;i++){
             if(mapNames[i].value === ''){
                 isNames = false
             }else{
-                createDP.maps.push(mapNames[i].value)
+                createDP.maps.push(mapNames[i].value + '.' + maps_[i].files.type.split('/')[1]);
                 form.append('map', maps_[i].files, mapNames[i].value)
             }
         }
@@ -138,9 +133,17 @@ function mapMenuActivate(){
         let files = document.getElementById('map').files[0];
         let name = document.getElementById('map-name');
         console.log(files)
+        console.log(name)
         
-        if(!files || name.value === '' || campaignName.value === '' || description.value === ''){
-            if(name.value === '' && !files){
+        if(!files || name.value === '' || campaignName.value === '' || description.value === '' || name === null){
+            if(name === null){
+                message.innerHTML = 'Enter All Details!'
+                message.classList.toggle('error');
+                setTimeout(()=>{
+                    message.innerHTML = ''
+                    message.classList.toggle('error');
+                },1500)
+            }else if(name.value === '' && !files){
                 message.innerHTML = 'Everything Missing'
                 message.classList.toggle('error');
                 setTimeout(()=>{
@@ -187,23 +190,38 @@ function mapMenuActivate(){
     }
 }
     
-// When map is clicked, delete map Item
-    
+// When map is clicked, delete map Item  
 function deleteMap(e){
-
+    console.log(e.target.name)
     // Delete the correct Obj on the array
+
+    // Get Map Items
     let mapItems = document.getElementsByClassName('map-item');
-    // console.log(mapItems.length)
-    let index = e.target.parentElement.parentElement.name;
+    
+    // Get Map Items Container (Map Form)
     let mapForm = document.getElementById('map-form');
+
+    // Create new Map Item
     let mapItem = document.createElement('div');
-    mapItems[index].remove()
-    // console.log(mapItems.length)
+
+    // Name of Item to delete
+    let nameOfItem = e.target.name;
+
+    for(let el of mapItems){
+        if(el.name === nameOfItem){
+            el.remove();
+            for(let ol of maps_){
+                if(ol.name === nameOfItem){
+                    maps_.splice(maps_.indexOf(ol), 1)
+                }
+            }
+        }
+    }
+
     mapItem.className = 'map-item';
 }
 
 // Get snippet from server to include next Map grid Item
-
 async function getMapInputField(){
     const {data} = await axios.get('/assets/snippets/addmapitem.html')
 
@@ -211,45 +229,74 @@ async function getMapInputField(){
 }
 
 // Get Preview Image from Server to display preview
-
 function mapPreview(e){
+
+    // On Image Select
+
+    // Get Map Input Item
     let mapItem = document.getElementsByClassName('map-item')
+
+    // Get Map Input Label
     let mapLabel = document.getElementById('map-label');
+
+    // Get Map Input File
     let files = document.getElementById('map').files[0];
 
+    // Make dataPackage for Array
     let objectToStore = {
         name: files.name,
         files: files,
     }
 
+    // Store Map information in an Array
     maps_.push(objectToStore);
 
-    mapLabel.innerHTML = ''
+    // Erase MapLabel Text
+    mapLabel.innerHTML = '';
 
-    // Get a preview of the map
+    // Get a preview of the map from Server
     async function previewMap(){
 
+        // Create new Form to Append the Map
         let form = new FormData();
         form.append('img-edit', files, files.name)
 
+        // Delete Map Input Label to Change for Loading Logo 
         mapLabel.innerHTML = ''
         mapLabel.style = "background-image: url('/img/loading.gif');background-size: cover;background-position: center;background-repeat: no-repeat;background-color: black;"
         
         try {
+            // Get Img preview
             const {data} = await axios.post('/img-process', form)
             if(data){
+
+                // Once it Loads Remove Label
                 mapLabel.remove();
-                let mapPreview = document.createElement('a');
+                
+                // Create MapPreview <a> and mapName <Input>
+                let mapPreview = cE('a');
+                let mapName = cE('div')
+                let img = cE('img')
+
+                // OnClick of <a> deleteMap Item
                 mapPreview.onclick = deleteMap;
+                mapPreview.className = 'map-uploaded';
+                mapPreview.name = data.name
+                mapName.innerHTML = `<label for="map-name" style="color: whitesmoke;margin-top:.5rem;">Name of Map</label><input id="map-name" name="map-name" type="text" class="map-name" oninput="preventCharacters(event)">`
+                img.src = data.URI;
+                img.name = data.name
+                img.className = 'map-uploaded-img';
+                mapPreview.appendChild(img)
 
-    
-                mapPreview.className = 'map-uploaded'
-                mapPreview.innerHTML = `<img src="${data}" class='map-uploaded-img'>`
-
+                // Add Items to the DOM
                 let mapImgs = document.getElementsByClassName('map-uploaded-img')
-
                 mapItem[mapImgs.length].insertAdjacentElement('afterbegin' ,mapPreview)
+                mapPreview.insertAdjacentElement('afterend' ,mapName)
 
+                // Add Name to mapItem
+                mapItem[mapItem.length === 0?0:mapItem.length - 1].name = data.name
+
+                // Add Next Map Item with Img Input
                 addNextMapItem();
 
             }else{
@@ -265,18 +312,23 @@ function mapPreview(e){
 // Function to add Snippet to MapItem 
 
 async function addNextMapItem(){
-    let mapForm = document.getElementById('map-form')
+
+    // Get Container
+    let mapForm = document.getElementById('map-form');
+
+    // Map Items in the DOM
     let mapItems = document.getElementsByClassName('map-item');
-    let mapItem = document.createElement('div')
+
+    // New Map Item Creation
+    let data = await getMapInputField();
+    let mapItem = cE('div')
     mapItem.id = 'map-item'
     mapItem.className = 'map-item';
     mapItem.name = mapItems.length;
-    let data = await getMapInputField();
-    
     mapItem.innerHTML = data;
+
+    // Insert new Map Item
     mapForm.appendChild(mapItem)
-    // let map = document.getElementsByClassName('map')
-    // map[map.length].onchange = mapPreview;
 }
 
 // Prevent Characters

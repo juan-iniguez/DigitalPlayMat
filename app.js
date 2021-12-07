@@ -245,7 +245,7 @@ router.post('/img-process', upload.single('img-edit'), (req,res,next)=>{
 
     let originalImage = req.file
     let outputImage = undefined;
-
+    console.log(req.file)
     sharp(originalImage.buffer)
     .resize(256, 256, {
         fit: 'cover'
@@ -255,7 +255,11 @@ router.post('/img-process', upload.single('img-edit'), (req,res,next)=>{
         // console.log(data)
         // console.log(err)
         // console.log()
-        res.send(`data:image/${req.file.mimetype.split('/')[1]};base64,${outputImage}`)
+        let package = {
+            URI: `data:image/${req.file.mimetype.split('/')[1]};base64,${outputImage}`,
+            name: req.file.originalname,
+        }
+        res.send(package)
     })
 
 
@@ -284,7 +288,7 @@ router.post('/addMap', upload_.single('map'), (req,res,next)=>{
 router.post('/addMaps', upload_.array('map'), (req,res,next)=>{
 
     console.log(req.files)
-    res.send(req.files)
+    // res.send(req.files)
 
     // Maps in the files
     let maps = req.files
@@ -342,7 +346,7 @@ router.post('/createCampaign', (req,res,next)=>{
 
 router.post('/getMainCanvas', (req,res,next)=>{
     // console.log(req.body)
-    // console.log(req.user)
+    console.log(req.user)
     let index = undefined;
 
     for(let el of req.user.campaigns){
