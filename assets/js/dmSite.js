@@ -27,7 +27,7 @@ const canvasMain = document.getElementById('canvas-main')
 
 const socket = io();
 let privateChat = undefined;
-let allChat = window.location.href.split('/')[5];
+let allChat = window.location.href.split('/')[4];
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
