@@ -1212,6 +1212,10 @@ input::-webkit-inner-spin-button {
     color: white;
 }
 
+.chat-convo.notification{
+    background-color: brown;
+}
+
 .chat-textarea{
     width: 80%;
     height: 100%;

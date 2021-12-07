@@ -64,26 +64,24 @@ function connectToSocket(data){
     socket.on('connect', ()=>{
         console.log(`SessionId: ${socket.id}`)
         privateChat = socket.id;
-        let u_ = data.Username
         if(isNewConnect){
-            socket.emit('new-user', u_)
+            socket.emit('new-user', data.Username)
         }
     })
-    
     socket.on('message', message=>{
         console.log(message)
     })
+    socket.on('phonebook', user_=>{
+        if(isNewConnect){
+            UsersConnected = user_
+            phonebook(user_)
+        }
+    })
+    socket.on('user-connected', message=>{
+        sysMessage(message);
+        newUserConnects(message)
+    })
 }
-socket.on('phonebook', user_=>{
-    if(isNewConnect){
-        UsersConnected = user_
-        phonebook(user_)
-    }
-})
-socket.on('user-connected', message=>{
-    sysMessage(message);
-    newUserConnects(message)
-})
 
 
 
@@ -2197,7 +2195,7 @@ function sendMessage(room, message){
         chatInputMsg.value = '';
     }else{
         socket.emit('join-room', room);
-        socket.emit('send-message', message, Username);
+        socket.emit('send-message', message, room, Username);
         chatInputMsg.value = '';
     
         let p_ = cE('p');
@@ -2255,7 +2253,8 @@ function phonebook(u_){
             if(ol != Username){
                 let test = / /;
                 isNewConnect = false
-        
+                
+                // Create Tab
                 let chatConvo = gEI('chat-convo-container');
                 let newTab = cE('a');        
                 newTab.className = 'chat-convo';
@@ -2263,6 +2262,25 @@ function phonebook(u_){
                 newTab.name = ol;
                 newTab.onclick = selectConvo;
                 chatConvo.insertAdjacentElement('beforeend' ,newTab)
+
+                // Create ChatBox
+                let chatCont_ = gEI('chat-container')
+
+                // Create New Chat Box for newly made Chat
+                let chatbox = cE('div');
+                chatbox.id = ol;
+                chatbox.className = 'chat-box hide';
+                chatbox.onscroll = stopAutoScroll;
+                
+                // Push to Chatboxes
+                Chatboxes.push(ol)
+                
+                // Add New Chat box
+                chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox);
+
+
+                // Push to ChatBoxes
+
             }
         }
     }
@@ -2271,8 +2289,19 @@ function phonebook(u_){
 
 // Receive Messages
 
-socket.on('receive-message', (message, user)=>{
+socket.on('receive-message', (message, room, username_)=>{
     // console.log(message)
+    let user = undefined
+    console.log(username_)
+    if(room === Username){
+        user = username_;
+        console.log(user)
+    }else{
+        user = room;
+        console.log("we out on someone else")
+    }
+    notifyMsg(user);
+
     let currentChatbox = gEI(user);
     let p_ = cE('p');
     p_.className = 'chat-msg';
@@ -2298,6 +2327,7 @@ function selectConvo(e){
         }
     }
     if(isAlreadyChatbox){
+
         // Select Tab that was Active
         let currentChatboxName = gEC('chat-convo selected')
         
@@ -2306,11 +2336,17 @@ function selectConvo(e){
         
         // Get all ChatBoxes by CLASS
         let allChatTabs = gEC('chat-convo');
+        
+        // Target Chatbox
         let targetChatbox = gEI(e.target.name);
 
+        
         for(let el of allChatTabs){
             if(el.name === e.target.name){
                 currentChatboxName[0].classList.toggle('selected');
+                if(el.className === 'chat-convo notification'){
+                    el.classList.toggle('notification')
+                }
                 el.classList.toggle('selected')
                 currentChatBox.classList.toggle('hide')
                 console.log(el.name)
@@ -2379,6 +2415,17 @@ function stopAutoScroll(e){
 function gotoBottom(id){
     var element = document.getElementById(id);
     element.scrollTop = element.scrollHeight - element.clientHeight;
+}
+
+function notifyMsg(e){
+    if(currentRoom != e){
+        let tabNotify = gEC('chat-convo');
+        for(let el of tabNotify){
+            if(el.name === e){
+                el.classList.toggle('notification')
+            }
+        }
+    }
 }
 
 /* PLAYER SITE

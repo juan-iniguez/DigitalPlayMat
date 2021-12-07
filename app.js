@@ -86,11 +86,11 @@ app.use(router)
 
 io.on('connection', socket=>{
     socket.emit('message', 'You are connected...')
-    socket.on('send-message', (message, user) =>{
+    socket.on('send-message', (message, room, username) =>{
         console.log(message)
         // ALL UNTIL I GET THE TXT MESSAGING WORKING
         // io.emit("receive-message", message)
-        socket.broadcast.emit("receive-message", message , user)
+        socket.broadcast.emit("receive-message", message , room, username)
     })
     socket.on('join-room', room=>{
         socket.join(room)
