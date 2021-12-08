@@ -185,7 +185,15 @@ const linkShare = gEI('linkshare');
 linkShare.value = window.location.href
 
 let privateChat = undefined;
-let allChat = window.location.href.split('/')[5].replace('%20', ' ');
+let allChat = window.location.href.split('/')[5];
+if(allChat.test(/\%20/)){
+    let allchat_temp = ''
+    for(i=0; i<window.location.href.split('/')[5].split('%20').length;i++){
+        allchat_temp += allChat.split('%20')[i] + ' '
+    }
+    allChat = allchat_temp
+    console.log(allChat)
+}
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
