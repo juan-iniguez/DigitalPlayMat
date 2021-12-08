@@ -2311,7 +2311,7 @@ function phonebook(u_){
         // Avoid doubling own Username
         if(ol.name != Username){
             console.log(ol)
-            console.log(UsersConnected.indexOf(ol))
+            console.log(Chatboxes.indexOf(ol.name))
             // Match by Name  UsersConnected.indexOf(ol) === -1
             if(Chatboxes.indexOf(ol.name) === -1){
                 let test = / /;
@@ -2355,7 +2355,7 @@ socket.on('receive-message', (message, room, username_)=>{
 
     // ROOM = PRIVATEID TO GO ->
     // username_ = USERNAME OF WHO IT COMES FROM
-
+    console.log(room, Username_, message)
     if(room === allChat){
         // Notification
         notifyMsg(room);
