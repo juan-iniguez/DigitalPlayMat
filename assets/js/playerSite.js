@@ -200,9 +200,6 @@ let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
 
-// ChatBox From ALL CHAT
-let allChatBox = undefined;
-
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
 
