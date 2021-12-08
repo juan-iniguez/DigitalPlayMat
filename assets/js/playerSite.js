@@ -2352,6 +2352,10 @@ function phonebook(u_){
 // Receive Messages
 
 socket.on('receive-message', (message, room, username_)=>{
+
+    // ROOM = PRIVATEID TO GO ->
+    // username_ = USERNAME OF WHO IT COMES FROM
+
     if(room === allChat){
         // Notification
         notifyMsg(room);
@@ -2368,20 +2372,17 @@ socket.on('receive-message', (message, room, username_)=>{
         }
 
     }else{
-        
-        for(let el of UsersConnected){
-            if(el.name === Username && room === el.id){
-                let user = username_
-                notifyMsg(user);
-                console.log(user)
-                let currentChatbox = gEI(user);
-                let p_ = cE('p');
-                p_.className = 'chat-msg';
-                p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
-                currentChatbox.appendChild(p_);
-                if(isAutoScrollDown){
-                    gotoBottom(currentChatbox.id);
-                }
+        if(room === privateChat ){
+            let user = username_
+            notifyMsg(user);
+            console.log(user)
+            let currentChatbox = gEI(user);
+            let p_ = cE('p');
+            p_.className = 'chat-msg';
+            p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
+            currentChatbox.appendChild(p_);
+            if(isAutoScrollDown){
+                gotoBottom(currentChatbox.id);
             }
         }
     }
