@@ -2259,9 +2259,9 @@ function newUserConnects(user, privateID){
     let isAlreadyConnected = false
 
     // Go through UsersConnected to check if User is already in there
-    for(let el of UsersConnected){
-        if(el.name === user){
-            UsersConnected[UsersConnected.indexOf(el)].id === privateID;
+    for(i=0;i<UsersConnected.length; i++){
+        if(UsersConnected[i].name === user){
+            UsersConnected[i].id = privateID;
             // If user is already in the list then switch on
             isAlreadyConnected = true;
         }
