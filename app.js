@@ -159,11 +159,6 @@ router.get('/player/:player/:id', (req,res,next)=>{
 
 })
 
-// MAKE SCROLLING TO ZOOM OUT DONE
-// MAKE A PLAYER SITE AND A DM SITE
-// CONNECT THE DM ROOM TO THE PLAYER ROOM WITH SOCKET.IO
-
-
 router.get('/dm-side', (req,res,next)=>{
 
     io.on('connection', socket=>{

@@ -411,7 +411,7 @@ async function getCurrentMap(){
         const {data} = await axios.post('/getMainCanvas', {
             campaign: ejs_id
         })
-        console.log(data)
+        // console.log(data)
         img.src = `/maps/${data.img}`
         img.name = data.name
     } catch (error) {
@@ -2456,15 +2456,15 @@ function newUserConnects(user, privateID){
 // PhoneBook Calls in with All players Sync
 
 function phonebook(u_){
-    console.log(u_)
-    console.log(Username)
-    console.log(UsersConnected)
+    // console.log(u_)
+    // console.log(Username)
+    // console.log(UsersConnected)
     // Check Phonebook given item by item
     for(let ol of u_){
         // Avoid doubling own Username
         if(ol.name != Username){
-            console.log(ol)
-            console.log(Chatboxes.indexOf(ol.name))
+            // console.log(ol)
+            // console.log(Chatboxes.indexOf(ol.name))
             // Match by Name  UsersConnected.indexOf(ol) === -1
             if(Chatboxes.indexOf(ol.name) === -1){
                 let test = / /;
