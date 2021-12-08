@@ -401,7 +401,7 @@ async function getCurrentMap(){
     let regex = /[\%20]/
 
     if(regex.test(n_)){
-        n_ = n_.replace('%20', ' ')
+        n_ = n_.replace(regex, ' ')
     }
 
     try {
