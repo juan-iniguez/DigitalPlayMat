@@ -2219,7 +2219,7 @@ function sendMessage(room, message){
         }
         
         console.log(room)
-        socket.emit('join-room', room);
+        // socket.emit('join-room', room);
         socket.emit('send-message', message, room, Username);
         chatInputMsg.value = '';
     
