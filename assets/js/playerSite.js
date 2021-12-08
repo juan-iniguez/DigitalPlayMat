@@ -198,7 +198,10 @@ let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
- 
+
+// ChatBox From ALL CHAT
+let allChatBox = undefined;
+
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
 
@@ -216,6 +219,7 @@ async function getUsername(){
             UsersConnected.push({name: data.Username, id: socket.id})
             socket.emit('new-user', data.Username , socket.id)
             socket.emit('join-room', allChat)
+            allChatBox = gEI(allChat)
         },500)
         
     } catch (error) {
@@ -2350,7 +2354,7 @@ function onChatSubmit(e){
 
 // MESSAGE SENDER
 
-let allChatBox = gEI(allChat)
+// let allChatBox = gEI(allChat)
 allChatBox.addEventListener('scroll', stopAutoScroll )
 
 function sendMessage(room, message){
