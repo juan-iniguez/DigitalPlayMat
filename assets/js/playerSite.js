@@ -64,6 +64,7 @@ function connectToSocket(data){
         privateChat = socket.id;
         UsersConnected[0].id = socket.id;
         socket.emit('new-user', data.Username , socket.id)
+        socket.emit('join-room', allChat)
         console.log(`SessionId: ${socket.id}`)
     })
     socket.on('message', message=>{

@@ -89,9 +89,9 @@ io.on('connection', socket=>{
     socket.on('send-message', (message, room, username) =>{
         socket.broadcast.to(room).emit("receive-message", message , room, username)
     })
-    // socket.on('join-room', room=>{
-    //     socket.join(room)
-    // })
+    socket.on('join-room', room=>{
+        socket.join(room)
+    })
     socket.on('new-user', (username , privateID)=>{
         socket.broadcast.emit("user-connected", username , privateID)
         console.log(`Username of User New Connection: ${username}`)
