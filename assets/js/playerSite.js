@@ -186,7 +186,7 @@ linkShare.value = window.location.href
 
 let privateChat = undefined;
 let allChat = window.location.href.split('/')[5];
-if(allChat.test(/\%20/)){
+if((/\%20/).test(allChat)){
     let allchat_temp = ''
     for(i=0; i<window.location.href.split('/')[5].split('%20').length;i++){
         allchat_temp += allChat.split('%20')[i] + ' '
