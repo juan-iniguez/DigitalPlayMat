@@ -148,6 +148,8 @@ router.get('/getCampaigns', (req,res,next)=>{
 router.get('/player/:player/:id', (req,res,next)=>{
     let dmFile = fs.readFileSync('./assets/snippets/playerCSS.html')
 
+    console.log(req.params.id)
+
     if (req.isAuthenticated()) {
         res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id, auth: true})
     }else{

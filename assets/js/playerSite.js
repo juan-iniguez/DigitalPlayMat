@@ -185,15 +185,16 @@ const linkShare = gEI('linkshare');
 linkShare.value = window.location.href
 
 let privateChat = undefined;
-let allChat = window.location.href.split('/')[5];
-if((/\%20/).test(allChat)){
-    let allchat_temp = ''
-    for(i=0; i<window.location.href.split('/')[5].split('%20').length;i++){
-        allchat_temp += allChat.split('%20')[i] + ' '
-    }
-    allChat = allchat_temp
-    console.log(allChat)
-}
+let allChat = ejs_id;
+// let allChat = window.location.href.split('/')[5];
+// if((/\%20/).test(allChat)){
+//     let allchat_temp = ''
+//     for(i=0; i<window.location.href.split('/')[5].split('%20').length;i++){
+//         allchat_temp += allChat.split('%20')[i] + ' '
+//     }
+//     allChat = allchat_temp
+//     console.log(allChat)
+// }
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
@@ -219,8 +220,7 @@ async function getUsername(){
             UsersConnected.push({name: data.Username, id: socket.id})
             socket.emit('new-user', data.Username , socket.id)
             socket.emit('join-room', allChat)
-            allChatBox = gEI(allChat);
-            allChatBox.addEventListener('scroll', stopAutoScroll )
+            // allChatBox = gEI(allChat)
         },500)
         
     } catch (error) {
@@ -2355,8 +2355,8 @@ function onChatSubmit(e){
 
 // MESSAGE SENDER
 
-// let allChatBox = gEI(allChat)
-// allChatBox.addEventListener('scroll', stopAutoScroll )
+let allChatBox = gEI(allChat)
+allChatBox.addEventListener('scroll', stopAutoScroll )
 
 function sendMessage(room, message){
     let chatBox;
