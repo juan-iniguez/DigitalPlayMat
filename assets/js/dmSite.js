@@ -404,6 +404,15 @@ async function getCurrentMap(){
         n_ = n_.replace(regex, ' ')
     }
 
+    function destroyHtmlSpaces(){
+        if(regex.test(n_)){
+            n_ = n_.replace(regex, ' ');
+            destroyHtmlSpaces();
+        }else{
+            return
+        }
+    }
+
     try {
         console.log(n_)
         const {data} = await axios.post('/getMainCanvas', {
