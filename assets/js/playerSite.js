@@ -1,3 +1,4 @@
+const socket = io();
 window.addEventListener("contextmenu", e => e.preventDefault());
 
 // Shorten getElements
@@ -29,16 +30,14 @@ const canvasMain = document.getElementById('canvas-main')
 const linkShare = gEI('linkshare');
 linkShare.value = window.location.href
 
-const socket = io();
 let privateChat = undefined;
 let allChat = window.location.href.split('/')[5];
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
-let isNewConnect = true
 
-// Add current Chat to Chatboxes
+// Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
 
 /* First part is When User connects, they emit a signal
@@ -51,8 +50,8 @@ async function getUsername(){
         const {data} = await axios.get('/getUsername')
         Username = data.Username
 
+        UsersConnected.push({name: data.Username, id: undefined})
         connectToSocket(data);
-        UsersConnected.push(data.Username)
         
     } catch (error) {
         console.log(error)
@@ -62,28 +61,27 @@ getUsername();
 
 function connectToSocket(data){
     socket.on('connect', ()=>{
-        console.log(`SessionId: ${socket.id}`)
         privateChat = socket.id;
-        if(isNewConnect){
-            socket.emit('new-user', data.Username)
-        }
+        UsersConnected[0].id = socket.id;
+        socket.emit('new-user', data.Username , socket.id)
+        console.log(`SessionId: ${socket.id}`)
     })
     socket.on('message', message=>{
         console.log(message)
     })
     socket.on('phonebook', user_=>{
-        if(isNewConnect){
-            UsersConnected = user_
-            phonebook(user_)
-        }
+        // Get Phonebook from other users to SYNC
+        phonebook(user_)
     })
-    socket.on('user-connected', message=>{
-        sysMessage(message);
-        newUserConnects(message)
+    socket.on('user-connected', (user , privateID)=>{
+        // Get alerted when a new user connects
+        sysMessage(user);
+        // Add a Chatbox to your Message App
+        newUserConnects(user, privateID)
+
+        console.log(user,privateID)
     })
 }
-
-
 
 menuBtnOpen.addEventListener('click', (e)=>{
         settings.style = '';
@@ -2145,10 +2143,10 @@ allChatTab[0].name = allChat;
 let isCodeOn = false;
 
 function chatTextAreaCheck(e){
+
     let message = chatInputMsg.value
-    console.log(e.data , e.inputType)
-    console.log(e)
     let room = currentRoom 
+
     // Press "Enter"
     if(e.data === null && e.inputType === 'insertLineBreak'){
 
@@ -2156,9 +2154,16 @@ function chatTextAreaCheck(e){
             console.log('no')
             chatInputMsg.value = '';
 
-        }else{
-            console.log('hi')
-            console.log(message.length)
+        }else if(room != allChat){
+
+            for(let el of UsersConnected){
+                if(el.name === room){
+                    sendMessage(el.id, message)
+                }
+            }
+        }else if(room === allChat){
+            console.log('ALL')
+            console.log(room)
             sendMessage(room, message)
         }
     }
@@ -2167,12 +2172,20 @@ function chatTextAreaCheck(e){
 function onChatSubmit(e){
     let message = chatInputMsg.value;
     let room = currentRoom;
-    console.log(e.data , e.inputType)
-    console.log(e)
+    // console.log(e.data , e.inputType)
+    // console.log(e)
 
     if(message === '' || !message){
         return
-    }else{
+    }else if(room != allChat){
+        for(let el of UsersConnected){
+            if(el.name === room){
+                sendMessage(el.id, message)
+            }
+        }
+    }else if(room === allChat){
+        console.log('ALL')
+        console.log(room)
         sendMessage(room, message)
     }
 }
@@ -2183,17 +2196,29 @@ let allChatBox = gEI(allChat)
 allChatBox.addEventListener('scroll', stopAutoScroll )
 
 function sendMessage(room, message){
-    let chatBox
-    if(currentRoom === allChat){
+    let chatBox;
+    if(room === allChat){
         chatBox = gEI(allChat)
     }else{
-        chatBox = gEI(room)
+        for(let el of UsersConnected){
+            if(el.id === room){
+                chatBox = gEI(el.name)
+            }
+        }
     }
-    console.log(message)
+    // console.log(message)
     if(!message || message === ''){
-        console.log('no')
+        // console.log('no')
         chatInputMsg.value = '';
     }else{
+        for(let el of UsersConnected){
+            if(el.name === room){
+                room = el.id;
+                console.log('Change ID to real ID')
+            }
+        }
+        
+        console.log(room)
         socket.emit('join-room', room);
         socket.emit('send-message', message, room, Username);
         chatInputMsg.value = '';
@@ -2222,66 +2247,103 @@ function sysMessage(message){
 
 // New User Entered
 
-function newUserConnects(user){
+function newUserConnects(user, privateID){
+    // Chat Tabs of Convos CONTAINER
     let chatConvo = gEI('chat-convo-container');
+
+    // Create new TAB CONVO
     let newTab = cE('a');
+    
+    // Switch to check if the person is Already Connected
     let isAlreadyConnected = false
 
+    // Go through UsersConnected to check if User is already in there
     for(let el of UsersConnected){
-        if(el === user){
-            isAlreadyConnected = true
+        if(el.name === user){
+            UsersConnected[UsersConnected.indexOf(el)].id === privateID;
+            // If user is already in the list then switch on
+            isAlreadyConnected = true;
         }
     }
+    // Send the User List you have back to the new User.
     socket.emit('user-list', UsersConnected)
     
+    /* If user never had been connected then Add the 
+    tab and Push to the UsersConnected array */
     if(!isAlreadyConnected){
+        // Make new Tab
         newTab.className = 'chat-convo';
         newTab.innerHTML = user.split(' ')[0]
         newTab.name = user;
-        UsersConnected.push(user);
+        let dt = {
+            name: user,
+            id: privateID,
+        }
+        UsersConnected.push(dt);
         newTab.onclick = selectConvo;
         chatConvo.insertAdjacentElement('beforeend' ,newTab)
+
+        // Make new Chat Box
+        let chatCont_ = gEI('chat-container')
+
+        // Create New Chat Box for newly made Chat
+        let chatbox = cE('div');
+        chatbox.id = user;
+        chatbox.className = 'chat-box hide';
+        chatbox.onscroll = stopAutoScroll;
+        
+        // Push to Chatboxes
+        Chatboxes.push(user)
+        
+        // Add New Chat box
+        chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox); 
     }
 }
 
 // PhoneBook Calls in with All players Sync
 
 function phonebook(u_){
-    if(isNewConnect){
-        // let chatConvos = gEC('chat-convo');
-        for(let ol of UsersConnected){
-            if(ol != Username){
+    console.log(u_)
+    console.log(Username)
+    console.log(UsersConnected)
+    // Check Phonebook given item by item
+    for(let ol of u_){
+        // Avoid doubling own Username
+        if(ol.name != Username){
+            console.log(ol)
+            console.log(UsersConnected.indexOf(ol))
+            // Match by Name  UsersConnected.indexOf(ol) === -1
+            if(Chatboxes.indexOf(ol.name) === -1){
                 let test = / /;
-                isNewConnect = false
                 
                 // Create Tab
                 let chatConvo = gEI('chat-convo-container');
                 let newTab = cE('a');        
                 newTab.className = 'chat-convo';
-                newTab.innerHTML = test.test(ol)?ol.split(' ')[0]:ol
-                newTab.name = ol;
+                newTab.innerHTML = test.test(ol.name)?ol.name.split(' ')[0]:ol.name
+                newTab.name = ol.name;
                 newTab.onclick = selectConvo;
                 chatConvo.insertAdjacentElement('beforeend' ,newTab)
-
+    
                 // Create ChatBox
                 let chatCont_ = gEI('chat-container')
-
+    
                 // Create New Chat Box for newly made Chat
                 let chatbox = cE('div');
-                chatbox.id = ol;
+                chatbox.id = ol.name;
                 chatbox.className = 'chat-box hide';
                 chatbox.onscroll = stopAutoScroll;
                 
                 // Push to Chatboxes
-                Chatboxes.push(ol)
+                Chatboxes.push(ol.name)
+
+                // Push to UsersConnected
+                UsersConnected.push(ol)
                 
                 // Add New Chat box
                 chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox);
-
-
-                // Push to ChatBoxes
-
-            }
+    
+            }    
         }
     }
 }
@@ -2290,31 +2352,44 @@ function phonebook(u_){
 // Receive Messages
 
 socket.on('receive-message', (message, room, username_)=>{
-    // console.log(message)
-    let user = undefined
-    console.log(username_)
-    if(room === Username){
-        user = username_;
-        console.log(user)
-    }else{
-        user = room;
-        console.log("we out on someone else")
-    }
-    notifyMsg(user);
+    if(room === allChat){
+        // Notification
+        notifyMsg(room);
 
-    let currentChatbox = gEI(user);
-    let p_ = cE('p');
-    p_.className = 'chat-msg';
-    p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
-    currentChatbox.appendChild(p_);
-    if(isAutoScrollDown){
-        gotoBottom(currentChatbox.id);
+        let user = room
+
+        let currentChatbox = gEI(user);
+        let p_ = cE('p');
+        p_.className = 'chat-msg';
+        p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
+        currentChatbox.appendChild(p_);
+        if(isAutoScrollDown){
+            gotoBottom(currentChatbox.id);
+        }
+
+    }else{
+        
+        for(let el of UsersConnected){
+            if(el.name === Username && room === el.id){
+                let user = username_
+                notifyMsg(user);
+                console.log(user)
+                let currentChatbox = gEI(user);
+                let p_ = cE('p');
+                p_.className = 'chat-msg';
+                p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
+                currentChatbox.appendChild(p_);
+                if(isAutoScrollDown){
+                    gotoBottom(currentChatbox.id);
+                }
+            }
+        }
     }
 })
 
 // Change Room
 function selectConvo(e){
-    console.log(e.target.name)
+    // console.log(e.target.name)
     let isAlreadyChatbox = false;
     let selectedChatBox = undefined; 
     let chatCont_ = gEI('chat-container')
@@ -2323,7 +2398,7 @@ function selectConvo(e){
         if(el === e.target.name){
             isAlreadyChatbox = true;
             selectedChatBox = el;
-            console.log('Yes')
+            // console.log('Yes')
         }
     }
     if(isAlreadyChatbox){
@@ -2349,7 +2424,7 @@ function selectConvo(e){
                 }
                 el.classList.toggle('selected')
                 currentChatBox.classList.toggle('hide')
-                console.log(el.name)
+                // console.log(el.name)
             }
         }
         targetChatbox.classList.toggle('hide')
@@ -2402,7 +2477,7 @@ function selectConvo(e){
 // ScrollDown Msgs
 
 function stopAutoScroll(e){
-    console.log(e.target.scrollTop ,e.target.scrollTopMax)
+    // console.log(e.target.scrollTop ,e.target.scrollTopMax)
     setTimeout(()=>{
         if(e.target.scrollTop < e.target.scrollTopMax-90){
             isAutoScrollDown = false;

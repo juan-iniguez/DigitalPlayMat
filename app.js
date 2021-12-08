@@ -87,20 +87,17 @@ app.use(router)
 io.on('connection', socket=>{
     socket.emit('message', 'You are connected...')
     socket.on('send-message', (message, room, username) =>{
-        console.log(message)
-        // ALL UNTIL I GET THE TXT MESSAGING WORKING
-        // io.emit("receive-message", message)
         socket.broadcast.emit("receive-message", message , room, username)
     })
     socket.on('join-room', room=>{
         socket.join(room)
     })
-    socket.on('new-user', message=>{
-        socket.broadcast.emit("user-connected", message)
-        // io.emit('user-connected', message)
+    socket.on('new-user', (username , privateID)=>{
+        socket.broadcast.emit("user-connected", username , privateID)
+        console.log(`Username of User New Connection: ${username}`)
     })
     socket.on('user-list', Users=>{
-        console.log(Users)
+        // console.log(Users)
         socket.broadcast.emit("phonebook", Users)
     })
 })
@@ -394,7 +391,7 @@ router.post('/getMainCanvas', (req,res,next)=>{
     async function getCampaign(){
         try {
             const campaign = await Campaign.findOne({campaign: req.body.campaign})
-            console.log(campaign.campaign)
+            // console.log(campaign.campaign)
             let data = {
                 img: campaign.maps[0],
                 name: campaign.maps[0].split('.')[0],
