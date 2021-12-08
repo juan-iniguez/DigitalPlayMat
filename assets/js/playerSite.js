@@ -1,4 +1,26 @@
 const socket = io();
+
+socket.on('connect', ()=>{
+    console.log(`SessionId: ${socket.id}`)
+})
+socket.on('message', message=>{
+    console.log(message)
+})
+socket.on('phonebook', user_=>{
+    // Get Phonebook from other users to SYNC
+    phonebook(user_)
+})
+socket.on('user-connected', (user , privateID)=>{
+    // Get alerted when a new user connects
+    sysMessage(user);
+    // Add a Chatbox to your Message App
+    newUserConnects(user, privateID)
+    
+    console.log(user,privateID)
+})
+
+
+
 window.addEventListener("contextmenu", e => e.preventDefault());
 
 // Shorten getElements
@@ -31,11 +53,13 @@ const linkShare = gEI('linkshare');
 linkShare.value = window.location.href
 
 let privateChat = undefined;
+privateChat = socket.id;
 let allChat = window.location.href.split('/')[5];
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
+
 
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
@@ -49,40 +73,17 @@ async function getUsername(){
     try {
         const {data} = await axios.get('/getUsername')
         Username = data.Username
-
+        
         UsersConnected.push({name: data.Username, id: undefined})
-        connectToSocket(data);
+        UsersConnected[0].id = socket.id;
+        socket.emit('new-user', data.Username , socket.id)
+        socket.emit('join-room', allChat)
         
     } catch (error) {
         console.log(error)
     }
 }
 getUsername(); 
-
-function connectToSocket(data){
-    socket.on('connect', ()=>{
-        privateChat = socket.id;
-        UsersConnected[0].id = socket.id;
-        socket.emit('new-user', data.Username , socket.id)
-        socket.emit('join-room', allChat)
-        console.log(`SessionId: ${socket.id}`)
-    })
-    socket.on('message', message=>{
-        console.log(message)
-    })
-    socket.on('phonebook', user_=>{
-        // Get Phonebook from other users to SYNC
-        phonebook(user_)
-    })
-    socket.on('user-connected', (user , privateID)=>{
-        // Get alerted when a new user connects
-        sysMessage(user);
-        // Add a Chatbox to your Message App
-        newUserConnects(user, privateID)
-
-        console.log(user,privateID)
-    })
-}
 
 menuBtnOpen.addEventListener('click', (e)=>{
         settings.style = '';
