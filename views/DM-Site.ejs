@@ -1,4 +1,20 @@
 <div id='main-container'>
+    <div id='login-card' class="login-card">
+        <h1>Log In for Combat!</h1>
+        <h2>I can't let you in until you log in cowboy...</h2>
+        <div class="login-container">
+            <form action="" onclick="preventDef(event)">
+                <label for="username">E-mail</label>
+                <input class="" id="username" type="email" onchange="checkUsername(event)">
+                <label for="password">Password</label>
+                <input class="" id="password" type="password" onchange="checkPassword(event)">
+                <div class="btn-container">
+                    <input id="submit" type="submit" value="Log-In" onclick="doLogInCheck(event)">
+                </div>
+                <p id="message" class="message"></p>
+            </form>
+        </div>
+    </div>
     <div id='canvas-container'>
         <div id='canvas-main' class="canvas-main">
             <canvas id='map'></canvas>
@@ -16,20 +32,16 @@
             <div class='info-main'>
                 <h1 id='map-name'></h1>
             </div>
+            <a id='chat-openArrow' class="chat-openArrow" onclick="onChatArrowUp(event)"></a>
             <div  id='chat-main-container' class="chat-main-container hide">
                 <div class="chat-buttons-container">
                     <div id='chat-convo-container' class="chat-convo-container">
-                        <!-- <a id='chat-convo' class="chat-convo">Thyuss</a> -->
-                        <a id='chat-convo' class="chat-convo selected" name="<%- id %>">All</a>
-                        <!-- <a id='chat-convo' class="chat-convo">DM</a> -->
-                        <!-- <a id='chat-convo' class="chat-convo">Ayoocee</a> -->
+                        <a class="chat-convo selected">All</a>
                     </div>
                     <a id='chat-hide-icon' class="chat-hide-icon" onclick="onChatIconMouseDown(event)"></a>
                 </div>
                 <div id='chat-container' class="chat-container">
                     <div id='<%- id %>' class="chat-box">
-                        <!-- <p class="chat-msg"><span style="color: tomato;">Renashi: </span>Hello there!</p> -->
-                        <!-- <p class="chat-msg"><span style="color: yellowgreen;">Renashi: </span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p> -->
                     </div>
                     <div class="chat-inputs">
                         <textarea id='chat-textarea' class='chat-textarea' placeholder="Chat here..."></textarea>
@@ -46,7 +58,13 @@
         <label class='label'>Squares Height</label>
         <input id='sq-h' type="number" class="sq h" value="1">
         <label class="label">Link to Share to Players</label>
-        <input id='linkshare' type="text" value="https://dndvibes.com/player/<%- from_user %>/<%- id %>" disabled>
+        <input id='linkshare' type="text" disabled value="https://dndvibes.com/player/<%- from_user %>/<%- id %>">
+        <div class="additional-btns">
+            <a class="logout" onclick="logout(event)">Log Out</a>
+        </div>
     </div>
 </div>
+<script>
+    var auth = <%- auth %>;
+</script>
 <script src="/assets/js/dmSite.js"></script>

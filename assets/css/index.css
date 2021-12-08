@@ -1059,6 +1059,43 @@ input::-webkit-inner-spin-button {
 /* Player Side */
 /* New Shit */
 
+.chat-openArrow{
+    position: absolute;
+    display: flex;
+    width: 50px;
+    height: 50px;
+    filter: invert();
+    background-image: url('/img/arrow.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 35px;
+    bottom: 0px;
+    transform: rotate(-90deg);
+    border-radius: 0px 10px 10px 0px;
+    left: 20rem;
+    background-color: rgb(207, 123, 123);
+    box-shadow: 3px 0px 12px rgba(255, 255, 255, 0.52);
+    cursor: pointer;
+    opacity: .6;
+    transition-duration: 300ms;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.chat-openArrow:hover{
+    background-color: white;
+    filter:unset;
+    opacity: .6;
+}
+
+.chat-openArrow.hide{
+    bottom: -100vh;
+}
+
+.chat-openArrow.notification{
+    background-color: turquoise;
+}
+
 .chat-main-container{
     display: flex;
     position: absolute;
@@ -1067,8 +1104,8 @@ input::-webkit-inner-spin-button {
     align-items: center;
     bottom: 0px;
     left: 10px;
-    height: 50%;
-    min-height: 460px;
+    height: 400px;
+    min-height: 440px;
     width: 300px;
     transition-duration: 300ms;
     transition-property: all;
@@ -1129,6 +1166,11 @@ input::-webkit-inner-spin-button {
     padding-bottom: 8px;
     scrollbar-color: rgb(14, 101, 109) rgba(24, 24, 24, 0.657);
 }
+
+.chat-box.hide{
+    display: none;
+}
+
 
 .chat-inputs{
     display: flex;
@@ -1205,6 +1247,10 @@ input::-webkit-inner-spin-button {
 .chat-convo.selected:hover{
     background-color: teal;
     color: white;
+}
+
+.chat-convo.notification{
+    background-color: brown;
 }
 
 .chat-textarea{
@@ -1301,3 +1347,30 @@ input::-webkit-inner-spin-button {
 .chat-box::-webkit-scrollbar-thumb {
     background: teal;
 }
+
+.logout{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    font-size: 1.2rem;
+    padding: 1rem 1rem 1rem 1rem;
+    border-radius: 5px;
+    color: white;
+    text-decoration: none;
+    height: 3rem;
+    background-color: brown;
+    box-shadow: 0px 0px 15px black;
+    cursor: pointer;
+    transition-duration: 300ms;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    margin-top: 2rem;
+}
+
+.logout:hover{
+    background-color: rgb(195, 93, 93);
+    color:white;
+}
+

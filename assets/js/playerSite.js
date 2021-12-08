@@ -18,8 +18,9 @@ socket.on('user-connected', (user , privateID)=>{
     
     console.log(user,privateID)
 })
-
-
+socket.io.on("reconnect", () => {  
+    socket.emit('new-user', Username , socket.id)
+});
 
 window.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -33,6 +34,137 @@ let gEC = function(element){
 let cE = function(element){
     return document.createElement(element)
 };
+
+// Prevent Default
+function preventDef(e){
+    e.preventDefault()
+}
+
+// Login Check
+
+function isAuthenticated(){
+    if(auth){
+        let loginCard = gEI('login-card');
+        loginCard.remove();
+        getUsername(); 
+    }
+}
+isAuthenticated();
+
+function checkUsername(e){
+    let username = gEI('username')
+    let reg = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
+    if(!reg.test(username.value)){
+        (username.classname === 'error')?console.log():username.classList.toggle('error');
+    }else if(username.value === ''){
+        (username.classname === 'error')?console.log():username.classList.toggle('error');
+    }else{
+        (username.classname === 'error')?username.classList.toggle('error'):console.log('good');
+    }
+}
+
+function checkPassword(e){
+    let password = e.target
+    if(password.value === ''){
+        if(password.className === 'error'){
+        }else{
+            password.classList.toggle('error')
+        }
+    }else{
+        if(password.className === 'error'){
+            password.classList.toggle('error')
+        }
+    }
+}
+
+function doLogInCheck(e){
+    let username = gEI('username')
+    let password = gEI('password')
+    let message = gEI('message')
+
+    let dP = {
+        username: username.value,
+        password: password.value
+    }
+
+    if(!username.value && !password.value){
+        message.classList.toggle('err')
+        message.innerHTML = 'Username and Password Missing'
+        setTimeout(()=>{
+            message.innerHTML = ''
+            message.classList.toggle('err')
+        },1500)
+    }else if(!username.value){
+        message.classList.toggle('err')
+        message.innerHTML = 'Username Missing'
+        setTimeout(()=>{
+            message.innerHTML = ''
+            message.classList.toggle('err')
+        },1500)
+    }else if(!password.value){
+        message.classList.toggle('err')
+        message.innerHTML = 'Password Missing'
+        setTimeout(()=>{
+            message.innerHTML = ''
+            message.classList.toggle('err')
+        },1500)
+    }else if(username.value && password.value){
+        doLogIn(dP, message);
+    }
+}
+
+async function doLogIn(dP, message){
+    // console.log(dP)
+    try {
+        const {data} = await axios.post('/login', {
+            username: dP.username,
+            password: dP.password
+        })
+        if(data === 'username not found'){
+            message.innerHTML = 'No Username Found';
+            message.classList.toggle('err')
+            setTimeout(()=>{
+                message.innerHTML = '';
+                message.classList.toggle('err')
+            },2000)
+        }else if(data === 'username and password incorrect'){
+            message.innerHTML = 'Incorrect Password';
+            message.classList.toggle('err')
+            setTimeout(()=>{
+                message.innerHTML = '';
+                message.classList.toggle('err')
+            },2000)
+        }else if(data.status === 'Successful Log In'){
+            logInTrue(data);
+            message.innerHTML = "Successful Log In!"
+            message.classList.toggle('success')
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+function logInTrue(data){
+    let loginCard = gEI('login-card');
+
+    setTimeout(()=>{
+        loginCard.classList.toggle('hide');
+        loginCard.remove();
+        getUsername(); 
+    },500)
+}
+
+async function logout(e){
+    try {
+        const {data} = await axios.post('/logout')
+        if(data){
+            window.location.href = '/'
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
 
 const canvas = document.getElementById('map')
 let c = canvas.getContext('2d');
@@ -53,14 +185,12 @@ const linkShare = gEI('linkshare');
 linkShare.value = window.location.href
 
 let privateChat = undefined;
-privateChat = socket.id;
 let allChat = window.location.href.split('/')[5];
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
-
-
+ 
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
 
@@ -73,17 +203,19 @@ async function getUsername(){
     try {
         const {data} = await axios.get('/getUsername')
         Username = data.Username
-        
-        UsersConnected.push({name: data.Username, id: undefined})
-        UsersConnected[0].id = socket.id;
-        socket.emit('new-user', data.Username , socket.id)
-        socket.emit('join-room', allChat)
+        setTimeout(()=>{
+            privateChat = socket.id;
+            UsersConnected.push({name: data.Username, id: socket.id})
+            socket.emit('new-user', data.Username , socket.id)
+            socket.emit('join-room', allChat)
+        },500)
         
     } catch (error) {
         console.log(error)
     }
 }
-getUsername(); 
+// Use this to call if Auth: true
+// getUsername(); 
 
 menuBtnOpen.addEventListener('click', (e)=>{
         settings.style = '';
@@ -2109,6 +2241,7 @@ function tokenCMOnDown(e){
 let chat = gEI('chat');
 let chatContainer = gEI('chat-main-container');
 let chatHideIcon = gEI('chat-hide-icon');
+let chatOpenArrow = gEI('chat-openArrow');
 
 function chatListenerOn(){
     chat.addEventListener('click', onChatMouseDown)
@@ -2121,11 +2254,26 @@ function chatListenerOff(){
 
 function onChatIconMouseDown(e){
     chatContainer.classList.toggle('hide')
+    chatOpenArrow.classList.toggle('hide')
+}
+
+function onChatArrowUp(e){
+
+    chatContainer.classList.toggle('hide')
+    if(chatOpenArrow.className === 'chat-openArrow notification'){
+        chatOpenArrow.classList.toggle('notification')
+    }
+    chatOpenArrow.classList.toggle('hide')
+
 }
 
 function onChatMouseDown(){
     closeMenu();
     chatContainer.classList.toggle('hide')
+    if(chatOpenArrow.className === 'chat-openArrow notification'){
+        chatOpenArrow.classList.toggle('notification')
+    }
+    chatOpenArrow.classList.toggle('hide')
 }
 
 // Chat engine to connect players
@@ -2501,10 +2649,18 @@ function notifyMsg(e){
         let tabNotify = gEC('chat-convo');
         for(let el of tabNotify){
             if(el.name === e){
-                el.classList.toggle('notification')
+                if(el.className != "chat-convo notification"){
+                    el.classList.toggle('notification')
+                }
             }
         }
     }
+    if(chatOpenArrow.className != 'chat-openArrow hide'){
+        if(chatOpenArrow.className != 'chat-openArrow notification'){
+            chatOpenArrow.classList.toggle('notification')
+        }
+    }
+
 }
 
 /* PLAYER SITE

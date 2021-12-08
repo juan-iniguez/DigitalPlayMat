@@ -1,29 +1,3 @@
-const socket = io();
-
-socket.on('connect', ()=>{
-    console.log(`SessionId: ${socket.id}`)
-})
-socket.on('message', message=>{
-    console.log(message)
-})
-socket.on('phonebook', user_=>{
-    // Get Phonebook from other users to SYNC
-    phonebook(user_)
-})
-socket.on('user-connected', (user , privateID)=>{
-    // Get alerted when a new user connects
-    sysMessage(user);
-    // Add a Chatbox to your Message App
-    newUserConnects(user, privateID)
-    
-    console.log(user,privateID)
-})
-socket.io.on("reconnect", () => {  
-    socket.emit('new-user', Username , socket.id)
-});
-
-window.addEventListener("contextmenu", e => e.preventDefault());
-
 // Shorten getElements
 let gEI = function(element){
     return document.getElementById(element)
@@ -34,137 +8,6 @@ let gEC = function(element){
 let cE = function(element){
     return document.createElement(element)
 };
-
-// Prevent Default
-function preventDef(e){
-    e.preventDefault()
-}
-
-// Login Check
-
-function isAuthenticated(){
-    if(auth){
-        let loginCard = gEI('login-card');
-        loginCard.remove();
-        getUsername(); 
-    }
-}
-isAuthenticated();
-
-function checkUsername(e){
-    let username = gEI('username')
-    let reg = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-
-    if(!reg.test(username.value)){
-        (username.classname === 'error')?console.log():username.classList.toggle('error');
-    }else if(username.value === ''){
-        (username.classname === 'error')?console.log():username.classList.toggle('error');
-    }else{
-        (username.classname === 'error')?username.classList.toggle('error'):console.log('good');
-    }
-}
-
-function checkPassword(e){
-    let password = e.target
-    if(password.value === ''){
-        if(password.className === 'error'){
-        }else{
-            password.classList.toggle('error')
-        }
-    }else{
-        if(password.className === 'error'){
-            password.classList.toggle('error')
-        }
-    }
-}
-
-function doLogInCheck(e){
-    let username = gEI('username')
-    let password = gEI('password')
-    let message = gEI('message')
-
-    let dP = {
-        username: username.value,
-        password: password.value
-    }
-
-    if(!username.value && !password.value){
-        message.classList.toggle('err')
-        message.innerHTML = 'Username and Password Missing'
-        setTimeout(()=>{
-            message.innerHTML = ''
-            message.classList.toggle('err')
-        },1500)
-    }else if(!username.value){
-        message.classList.toggle('err')
-        message.innerHTML = 'Username Missing'
-        setTimeout(()=>{
-            message.innerHTML = ''
-            message.classList.toggle('err')
-        },1500)
-    }else if(!password.value){
-        message.classList.toggle('err')
-        message.innerHTML = 'Password Missing'
-        setTimeout(()=>{
-            message.innerHTML = ''
-            message.classList.toggle('err')
-        },1500)
-    }else if(username.value && password.value){
-        doLogIn(dP, message);
-    }
-}
-
-async function doLogIn(dP, message){
-    // console.log(dP)
-    try {
-        const {data} = await axios.post('/login', {
-            username: dP.username,
-            password: dP.password
-        })
-        if(data === 'username not found'){
-            message.innerHTML = 'No Username Found';
-            message.classList.toggle('err')
-            setTimeout(()=>{
-                message.innerHTML = '';
-                message.classList.toggle('err')
-            },2000)
-        }else if(data === 'username and password incorrect'){
-            message.innerHTML = 'Incorrect Password';
-            message.classList.toggle('err')
-            setTimeout(()=>{
-                message.innerHTML = '';
-                message.classList.toggle('err')
-            },2000)
-        }else if(data.status === 'Successful Log In'){
-            logInTrue(data);
-            message.innerHTML = "Successful Log In!"
-            message.classList.toggle('success')
-        }
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-function logInTrue(data){
-    let loginCard = gEI('login-card');
-
-    setTimeout(()=>{
-        loginCard.classList.toggle('hide');
-        loginCard.remove();
-        getUsername(); 
-    },500)
-}
-
-async function logout(e){
-    try {
-        const {data} = await axios.post('/logout')
-        if(data){
-            window.location.href = '/'
-        }
-    } catch (error) {
-        console.log(error)
-    }
-}
 
 const canvas = document.getElementById('map')
 let c = canvas.getContext('2d');
@@ -181,18 +24,14 @@ const notesBtn = document.getElementById('notes');
 const mainContainer = document.getElementById('main-container')
 const canvasContainer = document.getElementById('canvas-container')
 const canvasMain = document.getElementById('canvas-main')
-const linkShare = gEI('linkshare');
 
+const socket = io();
 let privateChat = undefined;
 let allChat = window.location.href.split('/')[4];
-console.log(allChat)
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
-let Chatboxes = [];
- 
-// Add Global Chat to Chatboxes
-Chatboxes.push(allChat)
+let isNewConnect = true
 
 /* First part is When User connects, they emit a signal
 Second part is when Server get's Signal, it sends broadcast to other Users
@@ -203,19 +42,42 @@ async function getUsername(){
     try {
         const {data} = await axios.get('/getUsername')
         Username = data.Username
-        setTimeout(()=>{
-            privateChat = socket.id;
-            UsersConnected.push({name: data.Username, id: socket.id})
-            socket.emit('new-user', data.Username , socket.id)
-            socket.emit('join-room', allChat)
-        },500)
+
+        connectToSocket(data);
+        UsersConnected.push(data.Username)
         
     } catch (error) {
         console.log(error)
     }
 }
-// Use this to call if Auth: true
-// getUsername(); 
+getUsername(); 
+
+function connectToSocket(data){
+    socket.on('connect', ()=>{
+        console.log(`SessionId: ${socket.id}`)
+        privateChat = socket.id;
+        let u_ = data.Username
+        if(isNewConnect){
+            socket.emit('new-user', u_)
+        }
+    })
+    
+    socket.on('message', message=>{
+        console.log(message)
+    })
+}
+socket.on('phonebook', user_=>{
+    if(isNewConnect){
+        UsersConnected = user_
+        phonebook(user_)
+    }
+})
+socket.on('user-connected', message=>{
+    sysMessage(message);
+    newUserConnects(message)
+})
+
+
 
 menuBtnOpen.addEventListener('click', (e)=>{
         settings.style = '';
@@ -2241,7 +2103,6 @@ function tokenCMOnDown(e){
 let chat = gEI('chat');
 let chatContainer = gEI('chat-main-container');
 let chatHideIcon = gEI('chat-hide-icon');
-let chatOpenArrow = gEI('chat-openArrow');
 
 function chatListenerOn(){
     chat.addEventListener('click', onChatMouseDown)
@@ -2254,26 +2115,11 @@ function chatListenerOff(){
 
 function onChatIconMouseDown(e){
     chatContainer.classList.toggle('hide')
-    chatOpenArrow.classList.toggle('hide')
-}
-
-function onChatArrowUp(e){
-
-    chatContainer.classList.toggle('hide')
-    if(chatOpenArrow.className === 'chat-openArrow notification'){
-        chatOpenArrow.classList.toggle('notification')
-    }
-    chatOpenArrow.classList.toggle('hide')
-
 }
 
 function onChatMouseDown(){
     closeMenu();
     chatContainer.classList.toggle('hide')
-    if(chatOpenArrow.className === 'chat-openArrow notification'){
-        chatOpenArrow.classList.toggle('notification')
-    }
-    chatOpenArrow.classList.toggle('hide')
 }
 
 // Chat engine to connect players
@@ -2282,21 +2128,17 @@ let sendChat = gEI('send-chat');
 sendChat.onclick = onChatSubmit;
 let chatInputMsg = gEI('chat-textarea');
 chatInputMsg.oninput = chatTextAreaCheck;
-let allChatTab = gEC('chat-convo selected');
-allChatTab[0].onclick = selectConvo;
-allChatTab[0].name = allChat;
-
-
+let chatBox = gEI('chat-box')
 
 // Switches
 
 let isCodeOn = false;
 
 function chatTextAreaCheck(e){
-
     let message = chatInputMsg.value
+    console.log(e.data , e.inputType)
+    console.log(e)
     let room = currentRoom 
-
     // Press "Enter"
     if(e.data === null && e.inputType === 'insertLineBreak'){
 
@@ -2304,16 +2146,9 @@ function chatTextAreaCheck(e){
             console.log('no')
             chatInputMsg.value = '';
 
-        }else if(room != allChat){
-
-            for(let el of UsersConnected){
-                if(el.name === room){
-                    sendMessage(el.id, message)
-                }
-            }
-        }else if(room === allChat){
-            console.log('ALL')
-            console.log(room)
+        }else{
+            console.log('hi')
+            console.log(message.length)
             sendMessage(room, message)
         }
     }
@@ -2322,55 +2157,28 @@ function chatTextAreaCheck(e){
 function onChatSubmit(e){
     let message = chatInputMsg.value;
     let room = currentRoom;
-    // console.log(e.data , e.inputType)
-    // console.log(e)
+    console.log(e.data , e.inputType)
+    console.log(e)
 
     if(message === '' || !message){
         return
-    }else if(room != allChat){
-        for(let el of UsersConnected){
-            if(el.name === room){
-                sendMessage(el.id, message)
-            }
-        }
-    }else if(room === allChat){
-        console.log('ALL')
-        console.log(room)
+    }else{
         sendMessage(room, message)
     }
 }
 
 // MESSAGE SENDER
 
-let allChatBox = gEI(allChat)
-allChatBox.addEventListener('scroll', stopAutoScroll )
+chatBox.addEventListener('scroll', stopAutoScroll )
 
 function sendMessage(room, message){
-    let chatBox;
-    if(room === allChat){
-        chatBox = gEI(allChat)
-    }else{
-        for(let el of UsersConnected){
-            if(el.id === room){
-                chatBox = gEI(el.name)
-            }
-        }
-    }
-    // console.log(message)
+    console.log(message)
     if(!message || message === ''){
-        // console.log('no')
+        console.log('no')
         chatInputMsg.value = '';
     }else{
-        for(let el of UsersConnected){
-            if(el.name === room){
-                room = el.id;
-                console.log('Change ID to real ID')
-            }
-        }
-        
-        console.log(room)
-        // socket.emit('join-room', room);
-        socket.emit('send-message', message, room, Username);
+        socket.emit('join-room', room);
+        socket.emit('send-message', message, Username);
         chatInputMsg.value = '';
     
         let p_ = cE('p');
@@ -2385,115 +2193,57 @@ function sendMessage(room, message){
 
 // System Messages
 function sysMessage(message){
-    let currentChatbox = gEI(currentRoom);
     let p_ = cE('p');
     p_.className = 'chat-msg bot';
     p_.innerHTML = `<span style="color: #cacaca;">Bot:</span>${message} has Joined!`
-    currentChatbox.appendChild(p_);
+    chatBox.appendChild(p_);
     if(isAutoScrollDown){
-        gotoBottom(currentChatbox.id);
+        gotoBottom(chatBox.id);
     }
 }
 
 // New User Entered
 
-function newUserConnects(user, privateID){
-    // Chat Tabs of Convos CONTAINER
+function newUserConnects(user){
     let chatConvo = gEI('chat-convo-container');
-
-    // Create new TAB CONVO
     let newTab = cE('a');
-    
-    // Switch to check if the person is Already Connected
     let isAlreadyConnected = false
 
-    // Go through UsersConnected to check if User is already in there
-    for(i=0;i<UsersConnected.length; i++){
-        if(UsersConnected[i].name === user){
-            UsersConnected[i].id = privateID;
-            // If user is already in the list then switch on
-            isAlreadyConnected = true;
+    for(let el of UsersConnected){
+        if(el === user){
+            isAlreadyConnected = true
         }
     }
-    // Send the User List you have back to the new User.
     socket.emit('user-list', UsersConnected)
     
-    /* If user never had been connected then Add the 
-    tab and Push to the UsersConnected array */
     if(!isAlreadyConnected){
-        // Make new Tab
         newTab.className = 'chat-convo';
         newTab.innerHTML = user.split(' ')[0]
         newTab.name = user;
-        let dt = {
-            name: user,
-            id: privateID,
-        }
-        UsersConnected.push(dt);
+        UsersConnected.push(user);
         newTab.onclick = selectConvo;
         chatConvo.insertAdjacentElement('beforeend' ,newTab)
-
-        // Make new Chat Box
-        let chatCont_ = gEI('chat-container')
-
-        // Create New Chat Box for newly made Chat
-        let chatbox = cE('div');
-        chatbox.id = user;
-        chatbox.className = 'chat-box hide';
-        chatbox.onscroll = stopAutoScroll;
-        
-        // Push to Chatboxes
-        Chatboxes.push(user)
-        
-        // Add New Chat box
-        chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox); 
     }
 }
 
 // PhoneBook Calls in with All players Sync
 
 function phonebook(u_){
-    console.log(u_)
-    console.log(Username)
-    console.log(UsersConnected)
-    // Check Phonebook given item by item
-    for(let ol of u_){
-        // Avoid doubling own Username
-        if(ol.name != Username){
-            console.log(ol)
-            console.log(Chatboxes.indexOf(ol.name))
-            // Match by Name  UsersConnected.indexOf(ol) === -1
-            if(Chatboxes.indexOf(ol.name) === -1){
+    if(isNewConnect){
+        // let chatConvos = gEC('chat-convo');
+        for(let ol of UsersConnected){
+            if(ol != Username){
                 let test = / /;
-                
-                // Create Tab
+                isNewConnect = false
+        
                 let chatConvo = gEI('chat-convo-container');
                 let newTab = cE('a');        
                 newTab.className = 'chat-convo';
-                newTab.innerHTML = test.test(ol.name)?ol.name.split(' ')[0]:ol.name
-                newTab.name = ol.name;
+                newTab.innerHTML = test.test(ol)?ol.split(' ')[0]:ol
+                newTab.name = ol;
                 newTab.onclick = selectConvo;
                 chatConvo.insertAdjacentElement('beforeend' ,newTab)
-    
-                // Create ChatBox
-                let chatCont_ = gEI('chat-container')
-    
-                // Create New Chat Box for newly made Chat
-                let chatbox = cE('div');
-                chatbox.id = ol.name;
-                chatbox.className = 'chat-box hide';
-                chatbox.onscroll = stopAutoScroll;
-                
-                // Push to Chatboxes
-                Chatboxes.push(ol.name)
-
-                // Push to UsersConnected
-                UsersConnected.push(ol)
-                
-                // Add New Chat box
-                chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox);
-    
-            }    
+            }
         }
     }
 }
@@ -2501,135 +2251,25 @@ function phonebook(u_){
 
 // Receive Messages
 
-socket.on('receive-message', (message, room, username_)=>{
-
-    // ROOM = PRIVATEID TO GO ->
-    // username_ = USERNAME OF WHO IT COMES FROM
-
-    console.log(room, username_, message)
-    if(room === allChat){
-        // Notification
-        notifyMsg(room);
-
-        let user = room
-
-        let currentChatbox = gEI(user);
-        let p_ = cE('p');
-        p_.className = 'chat-msg';
-        p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
-        currentChatbox.appendChild(p_);
-        if(isAutoScrollDown){
-            gotoBottom(currentChatbox.id);
-        }
-
-    }else{
-        if(room === privateChat ){
-            let user = username_
-            notifyMsg(user);
-            console.log(user)
-            let currentChatbox = gEI(user);
-            let p_ = cE('p');
-            p_.className = 'chat-msg';
-            p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
-            currentChatbox.appendChild(p_);
-            if(isAutoScrollDown){
-                gotoBottom(currentChatbox.id);
-            }
-        }
+socket.on('receive-message', (message, user)=>{
+    // console.log(message)
+    let p_ = cE('p');
+    p_.className = 'chat-msg';
+    p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
+    chatBox.appendChild(p_);
+    if(isAutoScrollDown){
+        gotoBottom(chatBox.id);
     }
 })
 
-// Change Room
 function selectConvo(e){
-    // console.log(e.target.name)
-    let isAlreadyChatbox = false;
-    let selectedChatBox = undefined; 
-    let chatCont_ = gEI('chat-container')
-
-    for(let el of Chatboxes){
-        if(el === e.target.name){
-            isAlreadyChatbox = true;
-            selectedChatBox = el;
-            // console.log('Yes')
-        }
-    }
-    if(isAlreadyChatbox){
-
-        // Select Tab that was Active
-        let currentChatboxName = gEC('chat-convo selected')
-        
-        // Get Current Chat Box
-        let currentChatBox= gEI(currentChatboxName[0].name)
-        
-        // Get all ChatBoxes by CLASS
-        let allChatTabs = gEC('chat-convo');
-        
-        // Target Chatbox
-        let targetChatbox = gEI(e.target.name);
-
-        
-        for(let el of allChatTabs){
-            if(el.name === e.target.name){
-                currentChatboxName[0].classList.toggle('selected');
-                if(el.className === 'chat-convo notification'){
-                    el.classList.toggle('notification')
-                }
-                el.classList.toggle('selected')
-                currentChatBox.classList.toggle('hide')
-                // console.log(el.name)
-            }
-        }
-        targetChatbox.classList.toggle('hide')
-
-        // Hide the Current Chat Box
-
-        currentRoom = e.target.name;
-    }else{
-        // Select Tab that was Active
-        let currentChatboxName = gEC('chat-convo selected')
-        
-        // Get Current Chat Box
-        let currentChatBox= gEI(currentChatboxName[0].name)
-        
-        
-        // Hide the Current Chat Box
-        currentChatBox.classList.toggle('hide');
-        
-        // Create New Chat Box for newly made Chat
-        let chatbox = cE('div');
-        chatbox.id = e.target.name;
-        chatbox.className = 'chat-box';
-        chatbox.onscroll = stopAutoScroll;
-        
-        // Push to Chatboxes
-        Chatboxes.push(e.target.name)
-        
-        // Deselect Curretn Chat Box
-        currentChatboxName[0].classList.toggle('selected')
-        
-        // Add New Chat box
-        chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox);
-
-        // Change the current Room
-        currentRoom = e.target.name;
-
-        // Highlight the Now Current Tab
-        let tabs_ = gEC('chat-convo');
-        for(let el of tabs_){
-            if(el.name === e.target.name){
-                el.classList.toggle('selected')
-            }
-        }
-    }
-
-
-
+    console.log(e.target.name)
 }
 
 // ScrollDown Msgs
 
 function stopAutoScroll(e){
-    // console.log(e.target.scrollTop ,e.target.scrollTopMax)
+    console.log(e.target.scrollTop ,e.target.scrollTopMax)
     setTimeout(()=>{
         if(e.target.scrollTop < e.target.scrollTopMax-90){
             isAutoScrollDown = false;
@@ -2642,26 +2282,7 @@ function stopAutoScroll(e){
 function gotoBottom(id){
     var element = document.getElementById(id);
     element.scrollTop = element.scrollHeight - element.clientHeight;
-}
-
-function notifyMsg(e){
-    if(currentRoom != e){
-        let tabNotify = gEC('chat-convo');
-        for(let el of tabNotify){
-            if(el.name === e){
-                if(el.className != "chat-convo notification"){
-                    el.classList.toggle('notification')
-                }
-            }
-        }
-    }
-    if(chatOpenArrow.className != 'chat-openArrow hide'){
-        if(chatOpenArrow.className != 'chat-openArrow notification'){
-            chatOpenArrow.classList.toggle('notification')
-        }
-    }
-
-}
+ }
 
 /* PLAYER SITE
 THIS IS FUNCTIONALITY TO PLAYERS ONLY */

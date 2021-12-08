@@ -94,7 +94,7 @@ io.on('connection', socket=>{
     })
     socket.on('new-user', (username , privateID)=>{
         socket.broadcast.emit("user-connected", username , privateID)
-        console.log(`Username of User New Connection: ${username}`)
+        // console.log(`Username of User New Connection: ${username}`)
     })
     socket.on('user-list', Users=>{
         // console.log(Users)
@@ -114,10 +114,15 @@ router.get('/', (req,res,next)=>{
 
 router.get('/campaign/:id', (req,res,next)=>{
     // Load an Already made campaign
-
     let dmFile = fs.readFileSync('./assets/snippets/dmFile.html')
-    res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id, from_user: req.user.name})
 
+    if (req.isAuthenticated()) {
+        res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id, auth:true, from_user: req.user.name})
+        // res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id, auth: true})
+    }else{
+        res.redirect('/')
+        // res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id, auth: false})
+    }
 })
 
 router.get('/new-campaign', (req,res,next)=>{
@@ -141,9 +146,15 @@ router.get('/getCampaigns', (req,res,next)=>{
 })
 
 router.get('/player/:player/:id', (req,res,next)=>{
-
     let dmFile = fs.readFileSync('./assets/snippets/playerCSS.html')
-    res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id})
+
+    if (req.isAuthenticated()) {
+        res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id, auth: true})
+    }else{
+        res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id, auth: false})
+    }
+
+
 })
 
 // MAKE SCROLLING TO ZOOM OUT DONE
