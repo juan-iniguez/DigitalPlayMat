@@ -2356,7 +2356,8 @@ socket.on('receive-message', (message, room, username_)=>{
 
     // ROOM = PRIVATEID TO GO ->
     // username_ = USERNAME OF WHO IT COMES FROM
-    console.log(room, Username_, message)
+
+    console.log(room, username_, message)
     if(room === allChat){
         // Notification
         notifyMsg(room);
