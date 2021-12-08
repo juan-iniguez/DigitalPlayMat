@@ -418,6 +418,7 @@ async function getCurrentMap(){
     function destroyHtmlSpaces(){
         if(regex.test(n_)){
             n_ = n_.replace(regex, ' ');
+            n_ = n_.replace('  ', ' ')
             destroyHtmlSpaces();
         }else{
             return
