@@ -184,7 +184,7 @@ const canvasMain = document.getElementById('canvas-main')
 const linkShare = gEI('linkshare');
 
 let privateChat = undefined;
-let allChat = window.location.href.split('/')[4];
+let allChat = window.location.href.split('/')[4].replace('%20', ' ');
 console.log(allChat)
 let currentRoom = allChat;
 let Username = undefined;
@@ -405,6 +405,7 @@ async function getCurrentMap(){
     }
 
     try {
+        console.log(n_)
         const {data} = await axios.post('/getMainCanvas', {
             campaign: n_
         })
