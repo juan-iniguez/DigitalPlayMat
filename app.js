@@ -399,7 +399,7 @@ router.post('/createCampaign', (req,res,next)=>{
 })
 
 router.post('/getMainCanvas', (req,res,next)=>{
-    // console.log(req.body)
+    console.log(req.body.campaign)
 
     async function getCampaign(){
         try {
