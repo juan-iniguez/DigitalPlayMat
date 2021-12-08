@@ -407,29 +407,6 @@ let img = new Image();
 
 async function getCurrentMap(){
 
-    let n_ = window.location.href.split('/')[window.location.href.split('/').length-1]
-    let regex = /[\%20]/
-
-    if(regex.test(n_)){
-        n_ = ''
-        for(let el of n_.split('%20')){
-            n_ += el + ' '
-        }
-        n_.replace(/\s/, '')
-        // n_ = n_.replace(regex, ' ')
-        // destroyHtmlSpaces();
-    }
-
-    // function destroyHtmlSpaces(){
-    //     if(regex.test(n_)){
-    //         n_ = n_.replace(regex, ' ');
-    //         n_ = n_.replace('  ', ' ')
-    //         destroyHtmlSpaces();
-    //     }else{
-    //         return
-    //     }
-    // }
-
     try {
         const {data} = await axios.post('/getMainCanvas', {
             campaign: ejs_id

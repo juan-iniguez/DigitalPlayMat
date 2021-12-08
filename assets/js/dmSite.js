@@ -397,27 +397,10 @@ let img = new Image();
 
 async function getCurrentMap(){
 
-    let n_ = window.location.href.split('/')[window.location.href.split('/').length-1]
-    let regex = /[\%20]/
-
-    if(regex.test(n_)){
-        n_ = n_.replace(regex, ' ')
-        destroyHtmlSpaces();
-    }
-
-    function destroyHtmlSpaces(){
-        if(regex.test(n_)){
-            n_ = n_.replace(regex, ' ');
-            destroyHtmlSpaces();
-        }else{
-            return
-        }
-    }
-
     try {
         console.log(n_)
         const {data} = await axios.post('/getMainCanvas', {
-            campaign: n_
+            campaign: ejs_id
         })
         console.log(data)
         img.src = `/maps/${data.img}`
