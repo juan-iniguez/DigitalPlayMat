@@ -432,7 +432,7 @@ async function getCurrentMap(){
 
     try {
         const {data} = await axios.post('/getMainCanvas', {
-            campaign: n_
+            campaign: ejs_id
         })
         console.log(data)
         img.src = `/maps/${data.img}`
