@@ -219,7 +219,8 @@ async function getUsername(){
             UsersConnected.push({name: data.Username, id: socket.id})
             socket.emit('new-user', data.Username , socket.id)
             socket.emit('join-room', allChat)
-            allChatBox = gEI(allChat)
+            allChatBox = gEI(allChat);
+            allChatBox.addEventListener('scroll', stopAutoScroll )
         },500)
         
     } catch (error) {
@@ -2355,7 +2356,7 @@ function onChatSubmit(e){
 // MESSAGE SENDER
 
 // let allChatBox = gEI(allChat)
-allChatBox.addEventListener('scroll', stopAutoScroll )
+// allChatBox.addEventListener('scroll', stopAutoScroll )
 
 function sendMessage(room, message){
     let chatBox;
