@@ -184,7 +184,7 @@ const canvasMain = document.getElementById('canvas-main')
 const linkShare = gEI('linkshare');
 
 let privateChat = undefined;
-let allChat = window.location.href.split('/')[4].replace('%20', ' ');
+let allChat = ejs_id;
 console.log(allChat)
 let currentRoom = allChat;
 let Username = undefined;
@@ -398,7 +398,7 @@ let img = new Image();
 async function getCurrentMap(){
 
     try {
-        console.log(n_)
+        // console.log(n_)
         const {data} = await axios.post('/getMainCanvas', {
             campaign: ejs_id
         })
@@ -2336,7 +2336,7 @@ function onChatSubmit(e){
 
 // MESSAGE SENDER
 
-let allChatBox = gEI(allChat)
+let allChatBox = gEI(ejs_id)
 allChatBox.addEventListener('scroll', stopAutoScroll )
 
 function sendMessage(room, message){
