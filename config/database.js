@@ -44,7 +44,22 @@ const campaignSchema = new mongoose.Schema({
     player_notes:[],
     mapNotes: [],
     mapBO: [],
-    players: [],
+    characters: [{
+        username: String,
+        name: String,
+        class: String,
+        race: String,
+        level: Number,
+        languages: [],
+        deathsaves: {
+            success: Number,
+            fail: Number,
+        },
+        hitpoints: Number,
+        speed: Number,
+        armorClass: Number,
+        token: Buffer,
+    }],
 })
 
 const Maps = connection.model('Maps', mapSchema);

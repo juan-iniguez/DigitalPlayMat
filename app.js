@@ -19,6 +19,8 @@ const Maps = connection.models.Maps;
 const User = connection.models.User;
 const Campaign = connection.models.Campaign;
 const app = express();
+const axios = require('axios');
+
 
 const options = {
     key: fs.readFileSync("./keys/localhost.key"),
@@ -84,7 +86,10 @@ app.use((req, res, next) => {
 
 app.use(router)
 
+let allClients = [];
+
 io.on('connection', socket=>{
+    allClients.push(socket.id)
     socket.emit('message', 'You are connected...')
     socket.on('send-message', (message, room, username) =>{
         socket.broadcast.to(room).emit("receive-message", message , room, username)
@@ -99,6 +104,11 @@ io.on('connection', socket=>{
     socket.on('user-list', Users=>{
         // console.log(Users)
         socket.broadcast.emit("phonebook", Users)
+    })
+    socket.on('disconnect', ()=>{
+        var i = allClients.indexOf(socket.id);
+        allClients.splice(i, 1);
+        socket.broadcast.emit('user-disconnected', socket.id)
     })
 })
 
@@ -414,5 +424,137 @@ router.post('/getMainCanvas', (req,res,next)=>{
     getCampaign();
 
 })
+
+// GET CHARACTER SHEET API - CRUD 
+
+// Create
+router.post('/new-character', (req,res,next)=>{
+
+    /* REQS:  
+    campaign
+    username
+    name
+    class
+    race
+    level
+    languages
+    deathsaves
+    hitpoints
+    speed
+    armorClass
+    token
+    */
+
+    let datapackage = {
+        username: req.body.username,
+        name: req.body.name,
+        class: req.body.class,
+        race: req.body.race,
+        level: req.body.level,
+        languages: req.body.languages,
+        deathsaves: req.body.deathsaves,
+        hitpoints: req.body.hitpoints,
+        speed: req.body.speed,
+        armorClass: req.body.armorClass,
+        token: req.body.token,
+    }
+
+    async function createNewCharacter(){
+        try {
+            let addCharacter = await Campaign.findOneAndUpdate({campaign: req.body.campaign}, {$push: {characters: datapackage}});
+
+            res.send(`Character: ${req.body.name}`)
+        } catch (error) {
+            console.log(error)
+            res.send(error)
+        }
+    }
+    createNewCharacter();
+})
+
+// Read
+router.post('/read-character', (req,res,next)=>{
+    let username = req.body.username;
+    let campaign = req.body.campaign;
+    let name = req.body.name;
+
+    async function readChar(){
+        try {
+            const char = await Campaign.findOne({campaign: campaign});
+
+            for(let el of char.characters){
+                if(el.name === name && el.username === username){
+                    // console.log(el)
+                    res.send(el)
+                }
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    readChar();
+})
+
+// Update
+router.post('/edit-character', (req,res,next)=>{
+    let data = req.body;
+    let campaign = req.body.campaign;
+    let username = req.body.username;
+    let characterName = req.body.characterName
+    
+    /* REQS: 
+    campaign
+    username
+    characterName
+    ANY STAT TO CHANGE
+    */
+    
+    // Polyfill Change
+    async function editCharacter(key, da){
+        try {
+            if(da != '' || da){
+                let set = `characters.$.${key}`
+                let updateCharacter = await Campaign.findOneAndUpdate({campaign: campaign, "characters.name": characterName}, {$set: {[set]: da}})
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    // Parse the keys of the fields to be changed
+    for(let el of Object.keys(data)){
+        // console.log(data[el])
+        if(el != campaign || el != username){
+            let d_ = data[el]
+            editCharacter(el ,d_)
+        }
+    }
+    res.send("Done");
+})
+
+// Delete
+router.post('/delete-character', (req,res,next)=>{
+    /* REQS:
+    username
+    campaign
+    name
+    */
+
+    // let username = req.body.username;
+    let campaign = req.body.campaign;
+    let name = req.body.name;
+
+    async function readCharacter(){
+        try {
+            const eraseChar = await Campaign.findOneAndUpdate({campaign: campaign, "characters.name": name}, {$pull: {"characters": {name: name}}},{multi:true})
+            res.send(eraseChar);
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    readCharacter();
+})
+
+
 
 server.listen(PORT || 443, ()=>{console.log(`Server running on port ${PORT}`)})

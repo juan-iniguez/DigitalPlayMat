@@ -16,11 +16,13 @@ socket.on('user-connected', (user , privateID)=>{
     // Add a Chatbox to your Message App
     newUserConnects(user, privateID)
     
-    console.log(user,privateID)
 })
 socket.io.on("reconnect", () => {  
     socket.emit('new-user', Username , socket.id)
 });
+socket.on('user-disconnected', (id)=>{
+    userDisconnects(id);
+})
 
 window.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -190,6 +192,7 @@ let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
+let languageList = [];
  
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
@@ -1107,15 +1110,11 @@ function exitPlayerMenu(e){
 function playerMenu(e){
     // Stop the Listeners for Drag and Doubling
     playersBtn.removeEventListener('click', playerMenu);
-    // canvas.removeEventListener('mousedown', onMouseClick)
-    // canvas.removeEventListener("mouseup", onMouseEnd)
-
 
     // Add New Event Listener to Exit with Icon
     playersBtn.addEventListener('click', exitPlayerMenu);
 
     // Menu Maker
-
     let playerMenuCont = document.createElement('div')
     playerMenuCont.className = 'playerMenu small';
     playerMenuCont.id = 'playerMenu'
@@ -1207,6 +1206,34 @@ function exitEditPlayer(){
     }
 }
 
+// Language List event listener
+
+function languageListAdd(e){
+    // ADD A DIV TO LIST AND PUSH TO ARRAY
+    let data = e.originalTarget.value
+
+    if(languageList.indexOf(data) === -1){
+        let createOption = cE('div');
+        createOption.className = 'cont-langlist'
+        createOption.id = data;
+        createOption.innerHTML = `<p class='p-langlist'>${data}</p><a name='${data}' class='del-langlist' onclick='languageListRemove(event)'>X</a>`
+        let addPlayerLangList = gEI('addPlayer-languageList');
+        languageList.push(data);
+        addPlayerLangList.appendChild(createOption)
+    }
+}
+
+function languageListRemove(e){
+
+    let name = e.originalTarget.name;
+    let index = languageList.indexOf(name)
+    if(index >= 0){
+        languageList.splice(index, 1)
+        let removal_ = gEI(name);
+        removal_.remove();
+    }
+}
+
 // Add Players to the List
 
 function addPlayerMenu(e){
@@ -1217,7 +1244,6 @@ function addPlayerMenu(e){
 
 
     // AddPlayer Menu
-    
     let addPlayerMenu = document.createElement('div');
     addPlayerMenu.className = 'addplayer-menu-container small';
     addPlayerMenu.id = 'addplayer-menu-container';
@@ -1229,6 +1255,20 @@ function addPlayerMenu(e){
     // Add Player Inputs
     setTimeout(()=>{
 
+        // campaign
+        // username
+        // name
+        // class
+        // race
+        // level
+        // languages
+        // deathsaves
+        // hitpoints
+        // speed
+        // armorClass
+        // token
+    
+
         let inputPlayerTitle = document.createElement('h1');
 
         let inputPlayerNameLabel = document.createElement('label');
@@ -1239,9 +1279,182 @@ function addPlayerMenu(e){
         let inputPlayerRace = document.createElement('input');
         let inputPlayerHPLabel = document.createElement('label');
         let inputPlayerHP = document.createElement('input');
+        inputPlayerHP.oninput = function(e){
+            let rege = /[a-zA-Z\*\\\&\#\@\!\^\&\-\.\, ]/
+            if(rege.test(e.data)){
+                e.originalTarget.value = 0;
+            }
+        }
         let inputPlayerSpeedLabel = document.createElement('label');
         let inputPlayerSpeed = document.createElement('input');
+        inputPlayerSpeed.oninput = function(e){
+            let rege = /[a-zA-Z\*\\\&\#\@\!\^\&\-\.\, ]/
+            if(rege.test(e.data)){
+                e.originalTarget.value = 0;
+            }
+        }
         let inputPlayerSubmit = document.createElement('a');
+        
+        // Additional Update
+        // Level
+        let inputLevelContainer = cE('div')
+        inputLevelContainer.className = 'addPlayer-HPc'
+        let inputLevelLabel = cE('label')
+        inputLevelLabel.innerHTML = 'LVL'
+        inputLevelLabel.className = 'addPlayer-label'
+        let inputLevel = cE('input');
+        inputLevel.type = 'number';
+        inputLevel.min = 0;
+        inputLevel.value = 0;
+        inputLevel.id = 'addPlayer-level';
+        inputLevel.className = 'addPlayer-input number';
+        inputLevel.oninput = function(e){
+            let rege = /[a-zA-Z\*\\\&\#\@\!\^\&\-\.\, ]/
+            if(rege.test(e.data)){
+                e.originalTarget.value = 0;
+            }
+        }
+        
+        // Arrows
+        let inputLevel_LA = document.createElement('a');
+        inputLevel_LA.className = 'addPlayer-Speed-LA';
+        inputLevel_LA.onclick = function (){
+            let _n = document.getElementById('addPlayer-level')
+            if(_n.value > 0){
+                _n.value--
+            }
+        }
+        
+        let inputLevel_RA = document.createElement('a');
+        inputLevel_RA.className = 'addPlayer-Speed-RA';
+        inputLevel_RA.onclick = function (){
+            let _n = document.getElementById('addPlayer-level')
+            if(_n.value >= 0 && _n.value < 999){
+                _n.value++
+            }
+        }
+
+        inputLevelContainer.appendChild(inputLevel_LA)
+        inputLevelContainer.appendChild(inputLevel)
+        inputLevelContainer.appendChild(inputLevel_RA)
+
+        // Language Label
+        let inputLangLabel = cE('label');
+        inputLangLabel.innerHTML = 'Languages';
+        inputLangLabel.className = 'addPlayer-label';
+        // Language Input
+        let inputLang = cE('select');
+        inputLang.id = 'addPlayer-language';
+        inputLang.className = 'addPlayer-input-language';
+        inputLang.placeholder = 'Select Language...';
+        inputLang.onchange = languageListAdd;
+
+        let selectedOption = cE('option');
+        selectedOption.value = '';
+        selectedOption.selected = true;
+        selectedOption.disabled = true;
+        selectedOption.innerHTML = 'Select a Language...'
+        inputLang.appendChild(selectedOption)
+
+        let languages = [
+            ["Dwarvish",
+            "Elvish",
+            "Giant",
+            "Gnomish",
+            "Goblin",
+            "Halfling",
+            "Orc"],
+            ["Abyssal",
+            "Celestial",
+            "Draconic",
+            "Deep Speech",
+            "Infernal",
+            "Primordial",
+            "Sylvan",
+            "Undercommon"]
+        ]
+
+        for(i=0; i<languages.length;i++){
+            if(i === 0){
+                let disOption = cE('option');
+                disOption.disabled = true;
+                disOption.value = 'Common Languages';
+                disOption.innerHTML = 'Common Languages';
+                inputLang.appendChild(disOption); 
+                for(let el of languages[i]){
+                    let option = cE('option');
+                    option.value = el;
+                    option.innerHTML = el;
+                    inputLang.appendChild(option); 
+                }
+            }else{
+                let disOption = cE('option');
+                disOption.disabled = true;
+                disOption.value = 'Uncommon Languages';
+                disOption.innerHTML = 'Uncommon Languages';
+                inputLang.appendChild(disOption); 
+                for(let el of languages[i]){
+                    let option = cE('option');
+                    option.innerHTML = el;
+                    option.value = el;
+                    inputLang.appendChild(option); 
+                }
+            }
+        }
+
+        let languageListCont = cE('div');
+        languageListCont.className = 'addPlayer-languageList';
+        languageListCont.id = 'addPlayer-languageList';
+        
+
+        // Armor Container
+        let armorClassContainer = cE('div');
+        armorClassContainer.className = 'addPlayer-HPc'
+
+        // Armor Class Label
+        let armorClassLabel = cE('label')
+        armorClassLabel.className = 'addPlayer-label';
+        armorClassLabel.innerHTML = 'AC';
+        
+        // Armor Class
+        let armorClass = cE('input');
+        armorClass.type = 'number'
+        armorClass.id = 'addPlayer-armorClass'
+        armorClass.className = 'addPlayer-input number'
+        armorClass.min = 0;
+        armorClass.value = 0;
+        armorClass.oninput = function(e){
+            let rege = /[a-zA-Z\*\\\&\#\@\!\^\&\-\.\, ]/
+            if(rege.test(e.data)){
+                e.originalTarget.value = 0;
+            }
+        }
+
+        
+        // Arrows
+        let armorClass_LA = document.createElement('a');
+        armorClass_LA.className = 'addPlayer-Speed-LA';
+        armorClass_LA.onclick = function (){
+            let _n = document.getElementById('addPlayer-armorClass')
+            if(_n.value > 0){
+                _n.value--
+            }
+        }
+        
+        let armorClass_RA = document.createElement('a');
+        armorClass_RA.className = 'addPlayer-Speed-RA';
+        armorClass_RA.onclick = function (){
+            let _n = document.getElementById('addPlayer-armorClass')
+            if(_n.value >= 0 && _n.value < 999){
+                _n.value++
+            }
+        }
+        
+        armorClassContainer.appendChild(armorClass_LA)
+        armorClassContainer.appendChild(armorClass)
+        armorClassContainer.appendChild(armorClass_RA)
+
+        // AAAA
         
         let inputPlayerStats = document.createElement('div');
         inputPlayerStats.className = 'addPlayer-stats';
@@ -1334,10 +1547,10 @@ function addPlayerMenu(e){
         inputPlayerNameLabel.innerHTML = 'Name'
         inputPlayerRaceLabel.innerHTML = 'Race'
         inputPlayerClassLabel.innerHTML = 'Class'
-        inputPlayerHPLabel.innerHTML = 'HitPoints'
-        inputPlayerTitle.innerHTML = 'Add Player'
-        inputPlayerSubmit.innerHTML = 'Add Hero'
-        inputPlayerSpeedLabel.innerHTML = 'Speed'
+        inputPlayerHPLabel.innerHTML = 'HP'
+        inputPlayerTitle.innerHTML = 'Add NPC'
+        inputPlayerSubmit.innerHTML = 'Add'
+        inputPlayerSpeedLabel.innerHTML = 'SP'
 
         addPlayerMenu.appendChild(inputPlayerTitle)
         addPlayerMenu.appendChild(inputPlayerNameLabel)
@@ -1346,9 +1559,19 @@ function addPlayerMenu(e){
         addPlayerMenu.appendChild(inputPlayerClass)
         addPlayerMenu.appendChild(inputPlayerRaceLabel)
         addPlayerMenu.appendChild(inputPlayerRace)
+
+        addPlayerMenu.appendChild(inputLangLabel)
+        addPlayerMenu.appendChild(inputLang)
+        addPlayerMenu.appendChild(languageListCont)
         addPlayerMenu.appendChild(inputPlayerStats)
+        
+        inputPlayerStats.appendChild(inputLevelLabel);
+        inputPlayerStats.appendChild(inputLevelContainer);
+        inputPlayerStats.appendChild(armorClassLabel)
+        inputPlayerStats.appendChild(armorClassContainer)
         inputPlayerStats.appendChild(inputPlayerHPLabel)
         inputPlayerStats.appendChild(inputPlayerHPc)
+
         inputPlayerHPc.appendChild(inputPlayerHP_LA)
         inputPlayerHPc.appendChild(inputPlayerHP)
         inputPlayerHPc.appendChild(inputPlayerHP_RA)
@@ -1464,14 +1687,27 @@ function isPlayerExists(Pname){
 
 function submitPlayer(){
 
+    // Names
     let Pname = document.getElementById('inputPlayerName')
     let Pclass = document.getElementById('inputPlayerClass')
     let Prace = document.getElementById('inputPlayerRace')
+    
+    // Array of Languages
+    let PlangList = languageList;
+    
+    // Numbers
+    let Plevel = gEI('addPlayer-level');
+    let ParmorClass = gEI('addPlayer-armorClass');
     let PhitPoints = document.getElementById('inputPlayerHP')
     let Pspeed = document.getElementById('inputPlayerSpeed')
+    
+    // Image
     let Pimg = document.getElementById('tokenImg-reference')
-    let menuPlayerList = document.getElementById('player-list')
+    
+    // Error Message
     let Pmessage = document.getElementById('inputPlayerMessage')
+
+    let menuPlayerList = document.getElementById('player-list')
     if(Pname.value === '' || Pclass.value === '' || Prace.value === '' || PhitPoints.value <= 0 || Pspeed <= 0 || Pimg.src === ''){
         Pmessage.innerHTML = 'Fill Out Details!';
         Pmessage.classList.toggle('error')
@@ -2379,7 +2615,7 @@ function sendMessage(room, message){
 
 // System Messages
 function sysMessage(message){
-    let currentChatbox = gEI(currentRoom);
+    let currentChatbox = gEI(allChat);
     let p_ = cE('p');
     p_.className = 'chat-msg bot';
     p_.innerHTML = `<span style="color: #cacaca;">Bot:</span>${message} has Joined!`
@@ -2442,6 +2678,37 @@ function newUserConnects(user, privateID){
         // Add New Chat box
         chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox); 
     }
+}
+
+// On User disconnects
+
+function userDisconnects(id){
+
+    let convoTab = gEC('chat-convo')
+    let itemRemove = undefined;
+    let index = undefined;
+
+    for(let el of UsersConnected){
+        if(el.id === id){
+            itemRemove = el;
+            index = UsersConnected.indexOf(el)
+            UsersConnected.splice(index,1)
+            for(let ol of convoTab){
+                if(ol.name === itemRemove.name){
+                    if(ol.name === currentRoom){
+                        let allChatEl = gEI(allChat);
+                        allChatEl.classList.toggle('hide');
+                        convoTab[0].classList.toggle('selected')
+                    }
+                    ol.remove();
+                    let convoBox = gEI(itemRemove.name)
+                    convoBox.remove()
+                }
+            }
+        }
+    }
+
+
 }
 
 // PhoneBook Calls in with All players Sync

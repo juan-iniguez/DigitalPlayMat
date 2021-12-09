@@ -21,6 +21,9 @@ socket.on('user-connected', (user , privateID)=>{
 socket.io.on("reconnect", () => {  
     socket.emit('new-user', Username , socket.id)
 });
+socket.on('user-disconnected', (id)=>{
+    userDisconnects(id);
+})
 
 window.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -199,6 +202,7 @@ let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
+let languageList = [];
 
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
@@ -727,7 +731,7 @@ function whereAmI(e){
 
 // Select Tiles for Notes
 
-notesBtn.addEventListener('click', noteMaker)
+// notesBtn.addEventListener('click', noteMaker)
 
 let mapTileArray_x = [];
 let mapTileArray_y = [];
@@ -1133,48 +1137,6 @@ function playerMenu(e){
         playerMenuCont.classList.toggle('small')
     },10)
 
-    // Add Player
-
-    let addPlayerCont = document.createElement('div');
-    addPlayerCont.className = 'add-player-container';
-    addPlayerCont.id = 'add-player-container';
-    playerMenuCont.appendChild(addPlayerCont)
-
-    let addPlayerMain = document.createElement('a')
-    addPlayerMain.className = 'add-player-main';
-    addPlayerMain.id = 'add-player-main';
-    addPlayerMain.onclick = addPlayerMenu;
-    addPlayerCont.appendChild(addPlayerMain)
-
-    let addPlayer = document.createElement('div');
-    addPlayer.className = 'add-player';
-    addPlayer.id = 'add-player-btn';
-    addPlayerMain.appendChild(addPlayer)
-    
-    let infoTitle = document.createElement('h1');
-    infoTitle.className = 'addPlayer-title';
-    infoTitle.id = 'addPlayer-title';
-    infoTitle.innerHTML = 'Add Player'
-    addPlayerMain.appendChild(infoTitle)
-
-    // Edit Players
-
-    let editPlayers = document.createElement('a');
-    editPlayers.className = 'edit-players';
-    editPlayers.id = 'edit-players';
-    editPlayers.onclick = doEditPlayers;
-    addPlayerCont.appendChild(editPlayers)
-
-    let editPlayerIcon = document.createElement('div');
-    editPlayerIcon.className = 'edit-player-icon';
-    editPlayerIcon.id = 'edit-player-icon';
-    editPlayers.appendChild(editPlayerIcon);
-
-    let editTitle = document.createElement('h1');
-    editTitle.className = 'editPlayers-title';
-    editTitle.id = 'editPlayers-title';
-    editTitle.innerHTML = 'Edit Players';
-    editPlayers.appendChild(editTitle);
 
     // Player List
 
@@ -1200,6 +1162,34 @@ function getPlayerList(list){
         list.appendChild(div)
     }
 
+}
+
+// Language List event listener
+
+function languageListAdd(e){
+    // ADD A DIV TO LIST AND PUSH TO ARRAY
+    let data = e.originalTarget.value
+
+    if(languageList.indexOf(data) === -1){
+        let createOption = cE('div');
+        createOption.className = 'cont-langlist'
+        createOption.id = data;
+        createOption.innerHTML = `<p class='p-langlist'>${data}</p><a name='${data}' class='del-langlist' onclick='languageListRemove(event)'>X</a>`
+        let addPlayerLangList = gEI('addPlayer-languageList');
+        languageList.push(data);
+        addPlayerLangList.appendChild(createOption)
+    }
+}
+
+function languageListRemove(e){
+
+    let name = e.originalTarget.name;
+    let index = languageList.indexOf(name)
+    if(index >= 0){
+        languageList.splice(index, 1)
+        let removal_ = gEI(name);
+        removal_.remove();
+    }
 }
 
 // Exit Edit Player
@@ -2388,7 +2378,7 @@ function sendMessage(room, message){
 
 // System Messages
 function sysMessage(message){
-    let currentChatbox = gEI(currentRoom);
+    let currentChatbox = gEI(allChat);
     let p_ = cE('p');
     p_.className = 'chat-msg bot';
     p_.innerHTML = `<span style="color: #cacaca;">Bot:</span>${message} has Joined!`
@@ -2450,6 +2440,35 @@ function newUserConnects(user, privateID){
         
         // Add New Chat box
         chatCont_.insertAdjacentElement( 'afterbegin' ,chatbox); 
+    }
+}
+
+// On User disconnects
+
+function userDisconnects(id){
+
+    let convoTab = gEC('chat-convo')
+    let itemRemove = undefined;
+    let index = undefined;
+
+    for(let el of UsersConnected){
+        if(el.id === id){
+            itemRemove = el;
+            index = UsersConnected.indexOf(el)
+            UsersConnected.splice(index,1)
+            for(let ol of convoTab){
+                if(ol.name === itemRemove.name){
+                    if(ol.name === currentRoom){
+                        let allChatEl = gEI(allChat);
+                        allChatEl.classList.toggle('hide');
+                        convoTab[0].classList.toggle('selected')
+                    }
+                    ol.remove();
+                    let convoBox = gEI(itemRemove.name)
+                    convoBox.remove()
+                }
+            }
+        }
     }
 }
 

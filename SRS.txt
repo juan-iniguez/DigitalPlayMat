@@ -1,5 +1,38 @@
-- Battle State
-- DM Site
-- Player Site
-- Custom Pictures
-- Right Click moves - Partially Done
+All Players function:
+
+- Battle State:
+    Ask Initiative for Order
+
+- Right Click moves
+    - Get Character Sheet;
+    - Get Health;
+    - Remove
+
+- Character Sheet
+
+    - Add Website Functionality
+
+    - Saving
+    - Editing
+    - Delete Character
+    = CRUD IS DONE!!!
+
+    - Update Token Image
+        + Name
+        + Class
+        + Race
+        + Level
+        + Languages
+        + DeathSaves
+        + Hitpoints
+        + Speed
+        + Armor Class
+        + Token
+
+
+Create API for:
+
+    - Sync Characters Added
+    - Sync Positions of Tokens
+    - Sync Character Hitpoints Across Players
+    - Sync Character Images
