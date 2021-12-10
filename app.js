@@ -398,7 +398,9 @@ router.post('/createCampaign', (req,res,next)=>{
         player_notes:[],
         mapNotes: [],
         mapBO: [],
-        players: [],    
+        characters: [],
+        blackout: false,
+        DM: String,
     }
 
     campaigns.name = req.body.campaignName;
@@ -410,6 +412,7 @@ router.post('/createCampaign', (req,res,next)=>{
     campaign_.campaign = req.body.campaignName;
     campaign_.description = req.body.description;
     campaign_.maps = req.body.maps;
+    campaign_.DM = req.user.name;
 
 
     async function uploadUserDB(){

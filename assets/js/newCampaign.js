@@ -79,6 +79,14 @@ function mapMenuActivate(){
         campaignName: campaignName.value,
         description: description.value,
         maps: [],
+        dm_notes:[],
+        player_notes: [],
+        mapNotes: [],
+        mapBO: [],
+        mapPositions: [],
+        characters: []
+        blackout: false,
+        DM: undefined
     }
 
     if(maps_.length > 1){
