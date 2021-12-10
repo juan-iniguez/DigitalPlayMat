@@ -84,9 +84,9 @@ function mapMenuActivate(){
         mapNotes: [],
         mapBO: [],
         mapPositions: [],
-        characters: []
+        characters: [],
         blackout: false,
-        DM: undefined
+        DM: undefined,
     }
 
     if(maps_.length > 1){
