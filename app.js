@@ -19,7 +19,6 @@ const Maps = connection.models.Maps;
 const User = connection.models.User;
 const Campaign = connection.models.Campaign;
 const app = express();
-const axios = require('axios');
 
 
 const options = {
@@ -35,8 +34,6 @@ const PORT = process.env.PORT || 443;
 const upload = multer({ storage: storage });
 const upload_ = multer({ dest: __dirname + '/public/maps/' })
 
-const { diskStorage } = require('multer');
-const { SocketAddress } = require('net');
 
 const sessionStore = MongoStore.create({
     mongoUrl: process.env.DND_DB,
@@ -141,12 +138,13 @@ router.get('/campaign/:id', (req,res,next)=>{
     // Load an Already made campaign
     let dmFile = fs.readFileSync('./assets/snippets/dmFile.html')
 
+    let rege = / /g
+    let usernam = req.user.name.replace(rege, '%20');
+
     if (req.isAuthenticated()) {
-        res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id, auth:true, from_user: req.user.name})
-        // res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id, auth: true})
+        res.render('DM-Site' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile , id: req.params.id, auth:true, from_user: usernam})
     }else{
         res.redirect('/')
-        // res.render('player' , {title: 'DnD Map | Rolfe Shepsky (C) ',stylesheet: dmFile, id: req.params.id, auth: false})
     }
 })
 

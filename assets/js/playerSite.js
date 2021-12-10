@@ -625,29 +625,52 @@ function canvasLoading(){
     divLoader.id = 'canvas-loader'
 
     setTimeout(()=>{
-        let g_ = gEI('canvas-loader')
-        let h1 = cE('h1')
-        h1.innerHTML = 'Just a moment, almost there...';
-        h1.style = 'color:white;display: inline-block;font-size: 2rem;position:absolute; bottom:30%;'
-        g_.insertAdjacentElement('afterbegin', h1)
-
-        setTimeout(()=>{
-            h1.innerHTML = 'Maps are pretty big <3...';
+        if(img.complete){
+            return
+        }else{
+            let g_ = gEI('canvas-loader')
+            let h1 = cE('h1')
+            h1.innerHTML = 'Just a moment, almost there...';
+            h1.style = 'color:white;display: inline-block;font-size: 2rem;position:absolute; bottom:30%;'
+            g_.insertAdjacentElement('afterbegin', h1)
+    
             setTimeout(()=>{
-                h1.innerHTML = 'Furries are the superior race...';
-                setTimeout(()=>{
-                    h1.innerHTML='who said that?...';
+                if(img.complete){
+                   return 
+                }else{
+                    h1.innerHTML = 'Maps are pretty big <3...';
                     setTimeout(()=>{
-                        h1.innerHTML="'OwO'";
-                        setTimeout(()=>{
-                            if(!img.complete){
-                                window.location.reload();
-                            }
-                        },5000)
+                        if(img.complete){
+                            return
+                        }else{
+                            h1.innerHTML = 'Furries are the superior race...';
+                            setTimeout(()=>{
+                                if(img.complete){
+                                    return
+                                }else{
+                                    h1.innerHTML='who said that?...';
+                                    setTimeout(()=>{
+    
+                                        if(img.complete){
+                                            return
+                                        }else{
+                                            h1.innerHTML="'OwO'";
+                                            setTimeout(()=>{
+                                                if(img.complete){
+                                                    return
+                                                }else{
+                                                    window.location.reload();
+                                                }
+                                            },5000)
+                                        }
+                                    },8000)
+                                }
+                            },800)
+                        }
                     },8000)
-                },800)
+                }
             },8000)
-        },8000)
+        }
     },5000)
     
     canvasContainer.insertAdjacentElement('beforeend', divLoader)
@@ -1940,8 +1963,8 @@ function onTokenDown(e){
 // Listener turn on if tokens are active
 
 function listenTokenReselect(){
-    canvas.addEventListener('mousedown', overToken)
-    canvas.addEventListener('mousemove', hoverToken)
+    // canvas.addEventListener('mousedown', overToken)
+    // canvas.addEventListener('mousemove', hoverToken)
 }
 
 function exitListenTokenReselect(){
@@ -2940,8 +2963,15 @@ function tokenPreview(e){
 
 // Add Language to the List
 function languageListAdd(e){
+
+    console.log(e.currentTarget.value)
+    let data = undefined
     // ADD A DIV TO LIST AND PUSH TO ARRAY
-    let data = e.originalTarget.value
+    if(e.currentTarget.value){
+        data = e.currentTarget.value;
+    }else{
+        data = e.originalTarget.value;
+    }
 
     if(languageList.indexOf(data) === -1){
         let createOption = cE('div');
@@ -2956,8 +2986,13 @@ function languageListAdd(e){
 
 // Remove Language List
 function languageListRemove(e){
+    let name = undefined;
+    if(e.srcElement.name){
+        name = e.srcElement.name;
+    }else{
+        name = e.originalTarget.name
+    }
 
-    let name = e.originalTarget.name;
     let index = languageList.indexOf(name)
     if(index >= 0){
         languageList.splice(index, 1)
@@ -3135,8 +3170,6 @@ async function getCampaign(){
             campaign: allChat,
         })
         isBlackout = data.blackout;
-        console.log(data)
-
         checkBlackOut()
     } catch (error) {
         console.log(error)

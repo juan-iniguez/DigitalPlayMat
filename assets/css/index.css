@@ -1469,3 +1469,132 @@ option:disabled{
     border-radius: 25px;
     opacity: 1;
 }
+
+.maps-container{
+    background-color: rgba(0, 0, 0, 0.438);
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 1;
+    transition-duration: 300ms;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1);
+}
+
+.maps-container.hide{
+    opacity: 0;
+    z-index: -1;
+}
+
+.maps-card{
+    padding: 1rem;
+    background-color: rgba(100, 148, 237, 0.349);
+    border-radius: 10px;
+    width: 80%;
+}
+
+.maps-available{
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    width: 100%;
+    grid-auto-rows: 200px;
+    height: fit-content;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    border: solid rgba(255, 255, 255, 0.541) 2px;
+    background-color: rgba(20, 40, 77, 0.5);
+    border-radius: 10px;
+    grid-gap: 10px;
+}
+
+.map-item{
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(4, 35, 53, 0.609);
+    width: 100%;
+    height: 100%;
+    border-radius: 7px;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.map-item-img{
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+
+}
+
+.map-title{
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-family: DnD;
+    color: rgba(255, 255, 255, 0.815);
+    font-size: 1rem;
+}
+
+.map-link{
+    cursor: pointer;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.map-secondary-link{
+    font-size: .8rem;
+    color: white;
+    cursor: pointer;
+}
+
+.map-secondary-link:hover{
+    color: rgb(228, 117, 117);
+}
+
+.map-secondary{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+}
+
+.maps-{
+    background-image: url('/img/location.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 40px;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    margin-left: 1rem;
+    opacity: .5;
+    filter: invert();
+}
+
+.maps-close{
+    background-image: url('/img/close.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 30px;
+    height: 30px;
+    filter: invert();
+    opacity: .7;
+    cursor: pointer;
+}

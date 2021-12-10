@@ -1,4 +1,25 @@
 <div id='main-container'>
+    <div id='maps-container' class="maps-container hide">
+        <div class='maps-card'>
+            <div style='display: flex;flex-direction: row;width: 100%;height: fit-content;justify-content: space-between;align-items: center;'>
+                <h1 style="font-size: 3rem;color: white;font-family: DnD;width: 50%;">Maps:</h1>
+                <a id='maps-close' class='maps-close'></a>
+            </div>
+            <div id='maps-available' class="maps-available">
+                <div class='map-item'>
+                    <a class="map-link" name='Changing'>
+                        <img src='/maps/Changing.png' class="map-item-img">
+                    </a>
+                    <h2 class='map-title'>Deftera Closed</h2>
+                    <div class='map-secondary'>
+                        <a class='map-secondary-link'>Update</a>
+                        <a class='map-secondary-link'>Rename</a>
+                        <a class='map-secondary-link'>Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id='login-card' class="login-card">
         <h1>Log In for Combat!</h1>
         <h2>I can't let you in until you log in cowboy...</h2>
@@ -26,7 +47,8 @@
                         <a id='settings' class='settings' title="Settings"></a>
                         <a id='notes' class="notes" title="Notes"></a>
                         <a id='chat' class="chat" title='Chat'></a>
-                        <a id='blackout-icon' class="blackout-icon"></a>
+                        <a id='blackout-icon' class="blackout-icon" title="Blackout"></a>
+                        <a id='maps-' class="maps-" title='Maps'></a>
                     </div>
                 </div>
             </div>

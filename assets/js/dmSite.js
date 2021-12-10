@@ -563,8 +563,6 @@ function addMap(){
     }
 }
 
-
-
 // Create a Selection Square
 
 function createSelection(x, y, w, h){
@@ -624,11 +622,52 @@ function canvasLoading(){
     divLoader.id = 'canvas-loader'
 
     setTimeout(()=>{
-        let g_ = gEI('canvas-loader')
-        let h1 = cE('h1')
-        h1.innerHTML = 'Just a moment, almot there...';
-        h1.style = 'color:white;'
-        g_.insertAdjacentElement('afterbegin', h1)
+        if(img.complete){
+            return
+        }else{
+            let g_ = gEI('canvas-loader')
+            let h1 = cE('h1')
+            h1.innerHTML = 'Just a moment, almost there...';
+            h1.style = 'color:white;display: inline-block;font-size: 2rem;position:absolute; bottom:30%;'
+            g_.insertAdjacentElement('afterbegin', h1)
+    
+            setTimeout(()=>{
+                if(img.complete){
+                   return 
+                }else{
+                    h1.innerHTML = 'Maps are pretty big <3...';
+                    setTimeout(()=>{
+                        if(img.complete){
+                            return
+                        }else{
+                            h1.innerHTML = 'Furries are the superior race...';
+                            setTimeout(()=>{
+                                if(img.complete){
+                                    return
+                                }else{
+                                    h1.innerHTML='who said that?...';
+                                    setTimeout(()=>{
+    
+                                        if(img.complete){
+                                            return
+                                        }else{
+                                            h1.innerHTML="'OwO'";
+                                            setTimeout(()=>{
+                                                if(img.complete){
+                                                    return
+                                                }else{
+                                                    window.location.reload();
+                                                }
+                                            },5000)
+                                        }
+                                    },8000)
+                                }
+                            },800)
+                        }
+                    },8000)
+                }
+            },8000)
+        }
     },5000)
     
     canvasContainer.insertAdjacentElement('afterbegin', divLoader)
@@ -3200,6 +3239,66 @@ async function blackoutUpdate(){
     }
 }
 
+// Change Map Menu
+
+let mapsContainer = gEI('maps-container');
+let mapsButton = gEI('maps-');
+let mapsClose = gEI('maps-close')
+let mapsAvailable = gEI('maps-available')
+
+mapsClose.onclick = closeMapsMenu;
+mapsButton.onclick = createMapsMenu;
+
+function createMapsMenu(e){
+    e.preventDefault();
+    e.stopPropagation();
+
+    mapsContainer.classList.toggle('hide')
+
+    async function getAllMaps(){
+        try {
+            const {data} = await axios.post('/getCampaign', {
+                campaign: allChat,
+            })
+            for(let el of data.maps){
+                createMapItems(el);
+            }
+            console.log(data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    getAllMaps();
+
+    
+}
+
+function closeMapsMenu(){
+    mapsContainer.classList.toggle('hide')
+}
+
+function createMapItems(data){
+    
+    let snippet = `<a class="map-link" onclick='switchMaps(event)' name='${data.split('.')[0]}'>
+        <img src='/maps/${data}' class="map-item-img">
+    </a>
+    <h2 class='map-title'>${data.split('.')[0]}</h2>
+    <div class='map-secondary'>
+        <a class='map-secondary-link'>Update</a>
+        <a class='map-secondary-link'>Rename</a>
+        <a class='map-secondary-link'>Delete</a>
+    </div>`
+
+    let mapItem = cE('div');
+    mapItem.className = 'map-item'
+    mapItem.innerHTML = snippet;
+    mapsAvailable.appendChild(mapItem);
+
+}
+
+function switchMaps(e){
+    console.log(e.target.parentNode.name)
+}
 
 /* PLAYER SITE
 THIS IS FUNCTIONALITY TO PLAYERS ONLY */

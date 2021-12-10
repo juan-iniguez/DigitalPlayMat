@@ -29,8 +29,15 @@ All Players function:
         + Armor Class
         + Token
 
+- Changing of MAPS
+    - Change maps on everybodys computer
+    - Loader when changing maps
+    - Default everything to a place
+    - Add coordinates to the database
 
 Create API for:
+\
+dont allow players to make campaigns with the asme name
 
     - Sync Characters Added
     - Sync Positions of Tokens
