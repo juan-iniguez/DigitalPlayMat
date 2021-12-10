@@ -33,7 +33,7 @@ input[type='text'], input[type='password'],input[type='email']{
     background-color: rgba(0, 0, 0, 0.294);
     border-radius: 5px;
     border: solid rgba(255, 255, 255, 0.602) 2px;
-    margin-bottom: 1rem;
+    /* margin-bottom: 1rem; */
     font-size: 1rem;
 }
 
@@ -92,6 +92,7 @@ form{
 }
 
 .login-card.hide{
+    z-index: -1;
     opacity: 0;
 }
 
@@ -828,7 +829,7 @@ label{
 .player-list{
     display: grid;
     grid-template-columns: 1fr;
-    grid-auto-rows: 100px;
+    grid-auto-rows: 300px;
     /* overflow: scroll; */
     overflow-x: hidden;
     scroll-behavior: smooth;
@@ -871,6 +872,7 @@ label{
     color: white;
     font-weight: normal;
     font-size: 1rem;
+    margin-bottom: .2rem;
 }
 
 .addPlayer-input{
@@ -907,6 +909,7 @@ label{
     justify-content: center;
     align-items: center;
     height: 25px;
+    margin-bottom:.5rem;
 }
 
 .addPlayer-SPc{
@@ -1058,7 +1061,7 @@ label{
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: row;
+    flex-direction: column;
     font-size: 1rem;
     text-align: left;
     padding: .5rem;
@@ -1068,11 +1071,12 @@ label{
 .player-info{
     display: flex;
     flex-direction: column;
-    width: 70%;
+    width: 100%;
     height: 100%;
 }
 
 .player-name{
+    text-align: left;
     display: inline-block;
     font-size:130%;
     width:100%;
@@ -1092,7 +1096,7 @@ label{
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 30%;
+    width: 100%;
     height: fit-content;
     cursor: pointer;
 }
@@ -1186,7 +1190,7 @@ label{
 
 .tokenImg-label{
     width: 100%;
-    height: 130px;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.226);
     border: solid rgba(255, 255, 255, 0.623) 5px;
     margin-top: 1rem;
@@ -1208,15 +1212,17 @@ label{
 }
 
 .tokenImg-label.preview{
+    width: 150px;
+    height: 150px;
     background-position: center;
     background-repeat: no-repeat;
-    background-size: contain;
+    background-size: 100%;
     border: none;
 }
 
 .tokenImg-label.preview:hover{
     filter: saturate(0);
-    background-size: cover;
+    background-size: 85%;
 }
 
 .tokenImg{
@@ -1519,4 +1525,223 @@ label{
 
 .chat-box::-webkit-scrollbar-thumb {
     background: teal;
+}
+
+/* PLAYER ONLY */
+
+.character-creator{
+    display: flex;
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    background-image: url('/img/blacksmith.jpg');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    /* background-color: rgba(0, 0, 0, 0.548); */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 10;
+    opacity: 1;
+    transition-duration: 300ms;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.character-creator.hide{
+    opacity: 0;
+    z-index: -1;
+}
+
+
+.character-creator-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.287);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+
+}
+
+.character-creator-card{
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    font-size: 2.5rem;
+    width: 90%;
+    height: 90%;
+    max-width: 650px;
+    max-height: 650px;
+    background-color: rgba(42, 184, 17, 0.143);
+    border-radius: 10px;
+    padding: 5%;
+    overflow: hidden;
+}
+
+.char-hero{
+    color: rgba(255, 255, 255, 0.911);
+    font-size: inherit;
+}
+
+.char-fields{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.char-labels{
+    margin-bottom: 0px;
+    margin-top: 5px;
+}
+
+option:disabled{
+    background-color: gray;
+    color: black;
+}
+
+option{
+    background-color: rgba(0, 0, 0, 0.808);
+}
+
+.addPlayer-input-language{
+    width: 100%;
+    color:white;
+    font-size: 1rem;
+    background-color: rgba(0, 0, 0, 0.301);
+    border-radius: 5px;
+    border: solid white 1px;
+}
+
+.char-input{
+    margin-top: 0px;
+    width: 80%;
+}
+
+.char-numbers{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.addPlayer-languageList{
+    height: 200px;
+    max-height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.287);
+    margin-top: .5rem;
+    overflow: scroll;
+    overflow-x: hidden;
+    scrollbar-color: rgb(4, 54, 29) rgb(0, 128, 64);
+    scrollbar-width: thin;
+}
+
+.cont-langlist{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: fit-content;
+    color: white;
+    background: rgba(0, 128, 128, 0.602);
+}
+
+.p-langlist{
+    margin: 0px;
+    width: 80%;
+    height: 100%;
+    display: inline-block;
+    font-size: 1rem;
+    color: white;
+    padding-left: .5rem;
+}
+
+.del-langlist{
+    text-decoration: none;
+    width: 20%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    background-color: brown;
+    color: white;
+    cursor: pointer;
+}
+
+.del-langlist:hover{
+    background-color: rgb(92, 20, 20);
+    color: white;
+}
+
+.message-info{
+    color: white;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    width: 100%;
+    position: absolute;
+    padding: 1rem;
+    font-size: 1rem;
+    background-color: brown;
+    height: 1rem;
+    bottom: -300px;
+    z-index: 12;
+    margin: 0px;
+    margin-block: 0px;
+    left:0px;
+    transition-duration: 300ms;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.message-info.error{
+    bottom: 0px;
+}
+
+.blackout{
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+}
+
+.blackout.on{
+    z-index: 12;
+    background-color: black;
+    opacity: 1;
+}
+
+.dmwait-load{
+    background-image: url('/img/dmwait.gif');
+    width: 250px;
+    height: 250px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    animation: rotateD20 35s infinite;
+}
+
+@keyframes rotateD20 {
+    0%{
+        transform: rotate(0deg);
+    }
+    100%{
+        transform: rotate(359deg);
+    }
 }

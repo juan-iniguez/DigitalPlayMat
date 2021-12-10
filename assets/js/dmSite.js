@@ -1,3 +1,5 @@
+let isBlackout = false;
+
 const socket = io();
 
 socket.on('connect', ()=>{
@@ -22,6 +24,9 @@ socket.io.on("reconnect", () => {
 });
 socket.on('user-disconnected', (id)=>{
     userDisconnects(id);
+})
+socket.on("new-character", message=>{
+    addCharacterToList(message);
 })
 
 window.addEventListener("contextmenu", e => e.preventDefault());
@@ -185,6 +190,7 @@ const canvasContainer = document.getElementById('canvas-container')
 const canvasMain = document.getElementById('canvas-main')
 const linkShare = gEI('linkshare');
 
+let currentMap = undefined;
 let privateChat = undefined;
 let allChat = ejs_id;
 // console.log(allChat)
@@ -193,6 +199,8 @@ let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
 let languageList = [];
+let characters = [];
+let playerList = [];
  
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
@@ -212,13 +220,13 @@ async function getUsername(){
             socket.emit('new-user', data.Username , socket.id)
             socket.emit('join-room', allChat)
         },500)
+        allCharacters();
         
     } catch (error) {
         console.log(error)
     }
 }
-// Use this to call if Auth: true
-// getUsername(); 
+
 
 menuBtnOpen.addEventListener('click', (e)=>{
         settings.style = '';
@@ -405,9 +413,11 @@ async function getCurrentMap(){
         const {data} = await axios.post('/getMainCanvas', {
             campaign: ejs_id
         })
+        currentMap = data.name
         // console.log(data)
         img.src = `/maps/${data.img}`
         img.name = data.name
+        refreshPlayers();
     } catch (error) {
         console.log(error)
     }
@@ -417,6 +427,7 @@ getCurrentMap();
 
 // Switches
 
+let isCanvasLoaded = false;
 let isDown = false;
 let isImgLoad = false;
 let isSelectionOn = false;
@@ -455,16 +466,19 @@ function scrollWheelZoom(e){
             let updatedTokens = []
             
             tileSize = tileStandard*imgScale;
+
             for(let el of tokens){
+                console.log(el.index)
                 for(let ol of tokenPos){
-                    if(el.player === ol.index){
+                    console.log(ol.player)
+                    if(el.index === ol.player){
+                        console.log(el.player, ol.index)
                         let x = tokenPos[tokenPos.indexOf(ol)].x*tileSize
                         let y = tokenPos[tokenPos.indexOf(ol)].y*tileSize
                         let w = tileSize
                         let h = tileSize
                         let img_q = el.image
                         let qName = el.index
-                        console.log(el)
                         updatedTokens.push(new doDrawToken(x,y,w,h,img_q, qName))
                     }
                 }
@@ -492,14 +506,13 @@ function scrollWheelZoom(e){
             tileSize = tileStandard*imgScale;
             for(let el of tokens){
                 for(let ol of tokenPos){
-                    if(el.player === ol.index){
+                    if(el.index === ol.player){
                         let x = tokenPos[tokenPos.indexOf(ol)].x*tileSize
                         let y = tokenPos[tokenPos.indexOf(ol)].y*tileSize
                         let w = tileSize
                         let h = tileSize
                         let img_q = el.image
                         let qName = el.index
-                        console.log(el)
                         updatedTokens.push(new doDrawToken(x,y,w,h,img_q, qName))
                     }
                 }
@@ -529,19 +542,28 @@ let imgPos = {
 
 function addMap(){
 
-    mapName.innerHTML = img.name
-
-    // Each Square is 35pixels at * .5
-    // Each Square is 70pixels at * 1
-    let img_x = imgPos.x
-    let img_y = imgPos.y
-    let img_w = img.width * imgScale
-    let img_h = img.height * imgScale
-    c.drawImage(img, img_x, img_y, img_w, img_h);
-    if(!isImgLoad && img.height > 0){
-        isImgLoad = true;
+    if(!img.complete){
+        isCanvasLoaded = false;
+    }else{
+        mapName.innerHTML = img.name
+    
+        // Each Square is 35pixels at * .5
+        // Each Square is 70pixels at * 1
+        let img_x = imgPos.x
+        let img_y = imgPos.y
+        let img_w = img.width * imgScale
+        let img_h = img.height * imgScale
+        c.drawImage(img, img_x, img_y, img_w, img_h);
+        isCanvasLoaded = true;
+        if(!isImgLoad && img.height > 0){
+            isImgLoad = true;
+            let divloader = gEI('canvas-loader')
+            divloader.remove()
+        }
     }
 }
+
+
 
 // Create a Selection Square
 
@@ -594,6 +616,24 @@ function engine(){
     requestAnimationFrame(engine)
 }
 engine();
+
+function canvasLoading(){
+
+    let divLoader = cE('div')
+    divLoader.style = `background-image:url('/img/canvas_loader.gif'); background-size: 100px; background-repeat: no-repeat; background-position:center;width:100%;height:100%;position: absolute; display:flex;z-index: 20;background-color: black`
+    divLoader.id = 'canvas-loader'
+
+    setTimeout(()=>{
+        let g_ = gEI('canvas-loader')
+        let h1 = cE('h1')
+        h1.innerHTML = 'Just a moment, almot there...';
+        h1.style = 'color:white;'
+        g_.insertAdjacentElement('afterbegin', h1)
+    },5000)
+    
+    canvasContainer.insertAdjacentElement('afterbegin', divLoader)
+}
+canvasLoading();
 
 // Mouse Window Position
 
@@ -701,8 +741,35 @@ function onMouseEnd(e){
     isDown = false
 
     imgPos.x = tilePosition.tileX * -tileSize;
-    imgPos.y = tilePosition.tileY * -tileSize
+    imgPos.y = tilePosition.tileY * -tileSize;
+
+    let data_ = {
+        map: currentMap,
+        tileSize: tileSize,
+        x: tilePosition.tileX,
+        y: tilePosition.tileY,
+    }
+    socket.emit('img-position', data_)
+
+    async function updateCampaign(){
+        try {
+            const {data} = await axios.post('/mapPosition-update', {
+                campaign: allChat,
+                username: Username,
+                mapPositions: {
+                    mapName: data_.map,
+                    x: data_.x,
+                    y: data_.y,
+                },
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    updateCampaign();
 }
+
+
 
 // END DRAGGING ENGINE
 
@@ -1071,8 +1138,6 @@ function cursorNoteMessage(noteInfo, x, y, e){
 // END NOTE PROCESS
 // Player Character
 
-// Player List - TO BE DONE ON DB
-let playerList = []
 
 const playersBtn = document.getElementById('players');
 
@@ -1173,24 +1238,24 @@ function playerMenu(e){
     playerList.id = 'player-list'
     playerMenuCont.appendChild(playerList);
 
-    getPlayerList(playerList);
+    getPlayerList();
 
 }
 
 // Get Player List and Add it
 
-function getPlayerList(list){
+// function getPlayerList(list){
 
-    list.innerHTML = ''
-    for(let el of playerList){
-        // console.log(el)
-        let div = document.createElement('div');
-        div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.playerName}</h1><p class='player-classRace'>${el.class}/${el.race}</p><div class='hp-bar'></div><div class='player-stats'><p class='player-hp'>HP: ${el.HP}</p><p class='player-speed'>SP: ${el.speed}</p></div></div><a class='player-img-container' onclick=createToken(event) name=${el.playerName}><img class='player-img' name='${el.playerName}' src='${el.img}'></a>`
-        div.className = 'player-list-item'
-        list.appendChild(div)
-    }
+//     list.innerHTML = ''
+//     for(let el of playerList){
+//         // console.log(el)
+//         let div = document.createElement('div');
+//         div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.playerName}</h1><p class='player-classRace'>${el.class}/${el.race}</p><div class='hp-bar'></div><div class='player-stats'><p class='player-hp'>HP: ${el.HP}</p><p class='player-speed'>SP: ${el.speed}</p></div></div><a class='player-img-container' onclick=createToken(event) name=${el.playerName}><img class='player-img' name='${el.playerName}' src='${el.img}'></a>`
+//         div.className = 'player-list-item'
+//         list.appendChild(div)
+//     }
 
-}
+// }
 
 // Exit Edit Player
 
@@ -1801,7 +1866,7 @@ function doEditPlayers(){
         editPlayerList.style = 'height:80%;grid-auto-rows:180px;'
         playerMenu.appendChild(editPlayerList)
     
-        for(let el of playerList){
+        for(let el of characters){
             // Item Container
             let playerItemC = document.createElement('div');
             playerItemC.className = 'player-item-c'
@@ -2146,10 +2211,16 @@ function onTokenDown(e){
         y: whereAmI(e).tileY,
     }
 
-    tokenPos.push(tPos)
-
+    
     drawToken = new doDrawToken(x,y,tileSize,tileSize,img_t, pName)
+
+
+
+    tokenPos.push(tPos)
     tokens.push(drawToken);
+
+    // Emit Change
+    positionChangeEmit(tPos)
 
     if(isTokenReselect){
         canvas.removeEventListener('mousemove', reselectTokenOnMove)
@@ -2273,9 +2344,9 @@ function reselectToken(e){
 
     img_t = new Image();
     
-    for(let el of playerList){
-        if(el.playerName === tokenPos[whichToken(e)].player){
-            img_t.src = el.img
+    for(let el of characters){
+        if(el.name === tokenPos[whichToken(e)].player){
+            img_t.src = el.token
         }
     }
 
@@ -2293,7 +2364,10 @@ function reselectToken(e){
     canvas.addEventListener('mousemove', reselectTokenOnMove)
 }
 
+
 function reselectTokenOnMove(e){
+    let isTokenOverAnother = false;
+
     let x = whereAmI(e).tileX*tileSize;
     let y = whereAmI(e).tileY*tileSize;
 
@@ -2305,21 +2379,19 @@ function reselectTokenOnMove(e){
     
     for(let el of tokenPos){
         if(x_ === el.x && y_ === el.y){
-            isTokenSelected = false
+            isTokenOverAnother = true;
+            isTokenSelected = false;
             exitListenTokenReselect();
-            canvas.removeEventListener('mousedown', onTokenDown)
-            
-        }else{
-            if(!isTokenSelected){
-                isTokenSelected = true
-                listenTokenReselect();
-                canvas.addEventListener('mousedown', onTokenDown)
-            }
+            canvas.removeEventListener('mouseup', onTokenDown)
         }
     }
-    drawToken = new doDrawToken(x,y,w,h,img_t)
-
-
+    if(!isTokenOverAnother){
+        isTokenSelected = true
+        isTokenSelected = true
+        listenTokenReselect();
+        canvas.addEventListener('mouseup', onTokenDown)
+        drawToken = new doDrawToken(x,y,w,h,img_t)
+    }
 }
 
 function deleteToken(e){
@@ -2330,6 +2402,7 @@ function deleteToken(e){
             tokenPos.splice(i, 1)
             tokens.splice(i, 1)
             resetTokenCM(e);
+            emitTokenRemoval(e)
             // Remove Event Listeners
             canvas.removeEventListener('mousedown', resetTokenCM)    
             // Back to state0
@@ -2772,9 +2845,9 @@ socket.on('receive-message', (message, room, username_)=>{
         // Notification
         notifyMsg(room);
 
-        let user = room
+        let user = username_
 
-        let currentChatbox = gEI(user);
+        let currentChatbox = gEI(room);
         let p_ = cE('p');
         p_.className = 'chat-msg';
         p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
@@ -2924,6 +2997,263 @@ function notifyMsg(e){
 
 }
 
+
+// Position Change Process
+
+socket.on('position-update', (tpos)=>{
+    positionUpdate(tpos);
+})
+
+// Emitter
+function positionChangeEmit(tpos){
+
+    // UpdateDB
+    async function positionDBUpdate(){
+        try {
+            const {data} = await axios.post('/edit-character', {
+                campaign: allChat,
+                username: Username,
+                characterName: tpos.player,
+                position: tpos,
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    positionDBUpdate();
+
+    socket.emit('position-change', (tpos))
+}
+
+// Update Position
+function positionUpdate(tpos){
+
+    let isUpdated = false;
+    let imgUpdate = new Image();
+    
+    for(let el of tokens){
+        if(el.index === tpos.player){
+            isUpdated = true;
+            tokens.splice(tokens.indexOf(el), 1)
+            
+            for(let ul of characters){
+                if(ul.name === tpos.player){
+                    imgUpdate.src = ul.token;
+                    endUpdate();
+                }
+            }
+
+            function endUpdate(){
+                let x_ = tpos.x * tileSize;
+                let y_ = tpos.y * tileSize;
+    
+                drawToken = new doDrawToken(x_,y_,tileSize,tileSize,imgUpdate, tpos.player)
+    
+                // Delete from Tokens
+                tokens.push(drawToken)
+                for(let ol of tokenPos){
+                    if(ol.player === tpos.player){
+                        ol.x = tpos.x;
+                        ol.y = tpos.y;
+                    }
+                }
+            }
+        }
+    }
+    if(!isUpdated){
+        areTokensOnMap = true
+        for(let el of characters){
+            if(el.name === tpos.player){
+                imgUpdate.src = el.token
+            }
+        }
+        tokenPos.push(tpos)
+        let x = tpos.x *tileSize;
+        let y = tpos.y *tileSize;
+        drawToken = new doDrawToken(x,y,tileSize,tileSize,imgUpdate, tpos.player)
+        tokens.push(drawToken);
+    }
+}
+
+// Listen for Token Removal
+
+socket.on('remove-token', tokenName=>{
+    tokenRemoval(tokenName)
+})
+
+// Emit Token Removal
+
+function emitTokenRemoval(e){
+    let tokenName = e.target.name;
+    socket.emit('token-removed', tokenName);
+}
+
+// Remove Token
+function tokenRemoval(tokenName){
+    console.log(tokenName)
+    for(i=0;i<tokenPos.length;i++){
+        if(tokenName === tokenPos[i].player){
+
+            tokenPos.splice(i, 1)
+            tokens.splice(i, 1)
+
+            if(tokens.length === 0){
+                areTokensOnMap = false
+                isTokenSelected = false
+                exitTokenCM();
+            }
+        }
+    }
+}
+
+// Refresh Players Positions
+function refreshPlayers(){
+
+    // Create the Tokens and Add the TokenPos
+
+    for(let el of characters){
+        if(el.position){
+            let imgUpdate = new Image();
+            imgUpdate.src = el.token;
+            let x_ = el.position.x * tileSize;
+            let y_ = el.position.y * tileSize;
+            let name = el.name;
+            
+            drawToken = new doDrawToken(x_,y_,tileSize,tileSize,imgUpdate, name)
+            tokenPos.push(el.position);
+            tokens.push(drawToken)
+            areTokensOnMap = true
+            tokenContextMenu();
+
+            if(!isListeningForReselect){
+                isListeningForReselect = true;
+                listenTokenReselect();
+            }
+        
+
+        }
+    }
+
+
+}
+
+// Check get all Characters
+async function allCharacters(){
+    try {
+        const {data} = await axios.post('/all-characters', {campaign: allChat})
+        for(let el of data){
+            characters.push(el);
+        }
+        getCampaign();
+        refreshPlayers();
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+let blackout = gEI('blackout-icon');
+blackout.onclick = onBlackout;
+
+
+async function getCampaign(){
+    try {
+        const {data} = await axios.post('/getCampaign', {
+            campaign: allChat,
+        })
+        isBlackout = data.blackout;
+        if(isBlackout){
+            blackout.classList.toggle('on')
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+// Blackout
+function onBlackout(e){
+
+    let blackoutIcon = gEI('blackout-icon');
+    
+    if(!isBlackout){
+        socket.emit('blackout', {status: 'off'})
+        blackoutIcon.classList.toggle('on')
+        isBlackout = true;
+        blackoutUpdate();
+    }else{
+        socket.emit('blackout', {status: 'on'})
+        blackoutIcon.classList.toggle('on')
+        isBlackout = false;
+        blackoutUpdate();
+    }
+}
+
+async function blackoutUpdate(){
+    console.log(isBlackout)
+    try {
+        const {data} = await axios.post('/updateCampaign',{
+            campaign: allChat,
+            blackout: isBlackout,
+        })
+        console.log(data)
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+
 /* PLAYER SITE
 THIS IS FUNCTIONALITY TO PLAYERS ONLY */
 
+// Get Player List and Add it
+function getPlayerList(){
+    let list = gEI('player-list')
+    list.innerHTML = ''
+    for(let el of characters){
+        // console.log(el)
+        let div = document.createElement('div');
+        div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.name}</h1><p class='player-classRace'>${el.class}/${el.race}</p><div class='hp-bar'></div><div class='player-stats'><p class='player-hp'>HP: ${el.hitpoints}</p><p class='player-speed'>AC: ${el.armorClass}</p></div></div><a class='player-img-container' onclick=createToken(event) name=${el.name}><img class='player-img' name='${el.name}' src='${el.token}'></a>`;
+        div.className = 'player-list-item'
+        list.appendChild(div)
+    }
+
+}
+
+// Submit Players
+function submitPlayer(){
+
+    let Pname = document.getElementById('inputPlayerName')
+    let Pclass = document.getElementById('inputPlayerClass')
+    let Prace = document.getElementById('inputPlayerRace')
+    let PhitPoints = document.getElementById('inputPlayerHP')
+    let Pspeed = document.getElementById('inputPlayerSpeed')
+    let Pimg = document.getElementById('tokenImg-reference')
+    let menuPlayerList = document.getElementById('player-list')
+    let Pmessage = document.getElementById('inputPlayerMessage')
+    if(Pname.value === '' || Pclass.value === '' || Prace.value === '' || PhitPoints.value <= 0 || Pspeed <= 0 || Pimg.src === ''){
+        Pmessage.innerHTML = 'Fill Out Details!';
+        Pmessage.classList.toggle('error')
+        setTimeout(()=>{
+            Pmessage.classList.toggle('error')
+        },1500)
+    }else if(isPlayerExists(Pname)){
+        Pmessage.innerHTML = 'Player Already Exists';
+        Pmessage.classList.toggle('error')
+        setTimeout(()=>{
+            Pmessage.classList.toggle('error')
+        },1500)
+    }else{
+        // console.log(Pimg.src)
+        let dP = {
+            playerName: Pname.value,
+            class: Pclass.value,
+            race: Prace.value,
+            HP: PhitPoints.value,
+            speed: Pspeed.value,
+            img: Pimg.src,
+        }
+        // console.log(dP)
+        playerList.push(dP)
+        getPlayerList(menuPlayerList);
+        exitEditPlayer();
+    }
+}

@@ -40,8 +40,15 @@ const campaignSchema = new mongoose.Schema({
     campaign: String,
     description: String,
     maps: [],
+    mapPositions: [{
+        mapName: String,
+        tileSize: Number,
+        x: Number,
+        y: Number,
+    }],
     dm_notes: [],
     player_notes:[],
+    blackout: Boolean,
     mapNotes: [],
     mapBO: [],
     characters: [{
@@ -50,6 +57,11 @@ const campaignSchema = new mongoose.Schema({
         class: String,
         race: String,
         level: Number,
+        position: {
+            player: String,
+            x: Number,
+            y: Number,
+        },
         languages: [],
         deathsaves: {
             success: Number,
@@ -58,7 +70,7 @@ const campaignSchema = new mongoose.Schema({
         hitpoints: Number,
         speed: Number,
         armorClass: Number,
-        token: Buffer,
+        token: String,
     }],
 })
 

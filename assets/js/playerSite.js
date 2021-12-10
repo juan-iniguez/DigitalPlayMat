@@ -24,6 +24,12 @@ socket.io.on("reconnect", () => {
 socket.on('user-disconnected', (id)=>{
     userDisconnects(id);
 })
+socket.on("new-character", message=>{
+    addCharacterToList(message);
+})
+socket.on('change-imgPos', imgp=>{
+    updateImagePosition(imgp);
+})
 
 window.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -44,7 +50,6 @@ function preventDef(e){
 }
 
 // Login Check
-
 function isAuthenticated(){
     if(auth){
         let loginCard = gEI('login-card');
@@ -54,6 +59,7 @@ function isAuthenticated(){
 }
 isAuthenticated();
 
+// Login Functions
 function checkUsername(e){
     let username = gEI('username')
     let reg = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
@@ -169,6 +175,7 @@ async function logout(e){
     }
 }
 
+
 const canvas = document.getElementById('map')
 let c = canvas.getContext('2d');
 const squares = document.getElementById('squares');
@@ -203,14 +210,11 @@ let Username = undefined;
 let UsersConnected = [];
 let Chatboxes = [];
 let languageList = [];
+let characters = [];
+let playerList = [];
 
 // Add Global Chat to Chatboxes
 Chatboxes.push(allChat)
-
-/* First part is When User connects, they emit a signal
-Second part is when Server get's Signal, it sends broadcast to other Users
-The broadcast gives them an Instruction to send their usernames back to Server 
-Then back to the Original User*/
 
 async function getUsername(){
     try {
@@ -222,12 +226,14 @@ async function getUsername(){
             socket.emit('new-user', data.Username , socket.id)
             socket.emit('join-room', allChat)
             // allChatBox = gEI(allChat)
+            playerHasCharacter()
         },500)
         
     } catch (error) {
         console.log(error)
     }
 }
+
 // Use this to call if Auth: true
 // getUsername(); 
 
@@ -415,9 +421,10 @@ async function getCurrentMap(){
         const {data} = await axios.post('/getMainCanvas', {
             campaign: ejs_id
         })
-        // console.log(data)
-        img.src = `/maps/${data.img}`
-        img.name = data.name
+            // console.log(data)
+            img.src = `/maps/${data.img}`
+            img.name = data.name
+            refreshPlayers();
     } catch (error) {
         console.log(error)
     }
@@ -427,6 +434,7 @@ getCurrentMap();
 
 // Switches
 
+let isCanvasLoaded = false;
 let isDown = false;
 let isImgLoad = false;
 let isSelectionOn = false;
@@ -474,7 +482,6 @@ function scrollWheelZoom(e){
                         let h = tileSize
                         let img_q = el.image
                         let qName = el.index
-                        console.log(el)
                         updatedTokens.push(new doDrawToken(x,y,w,h,img_q, qName))
                     }
                 }
@@ -509,7 +516,6 @@ function scrollWheelZoom(e){
                         let h = tileSize
                         let img_q = el.image
                         let qName = el.index
-                        console.log(el)
                         updatedTokens.push(new doDrawToken(x,y,w,h,img_q, qName))
                     }
                 }
@@ -523,7 +529,6 @@ function scrollWheelZoom(e){
 function onScrollZoom(){
     canvas.addEventListener('wheel', scrollWheelZoom)
 }
-onScrollZoom();
 
 function offScrollZoom(){
     canvas.removeEventListener('wheel', scrollWheelZoom)
@@ -539,18 +544,26 @@ let imgPos = {
 
 function addMap(){
 
-    mapName.innerHTML = img.name
-
-    // Each Square is 35pixels at * .5
-    // Each Square is 70pixels at * 1
-    let img_x = imgPos.x
-    let img_y = imgPos.y
-    let img_w = img.width * imgScale
-    let img_h = img.height * imgScale
-    c.drawImage(img, img_x, img_y, img_w, img_h);
-    if(!isImgLoad && img.height > 0){
-        isImgLoad = true;
+    if(!img.complete){
+        isCanvasLoaded = false;
+    }else{
+        mapName.innerHTML = img.name
+    
+        // Each Square is 35pixels at * .5
+        // Each Square is 70pixels at * 1
+        let img_x = imgPos.x
+        let img_y = imgPos.y
+        let img_w = img.width * imgScale
+        let img_h = img.height * imgScale
+        c.drawImage(img, img_x, img_y, img_w, img_h);
+        isCanvasLoaded = true;
+        if(!isImgLoad && img.height > 0){
+            isImgLoad = true;
+            let divloader = gEI('canvas-loader')
+            divloader.remove()
+        }
     }
+
 }
 
 // Create a Selection Square
@@ -605,6 +618,42 @@ function engine(){
 }
 engine();
 
+function canvasLoading(){
+
+    let divLoader = cE('div')
+    divLoader.style = `background-image:url('/img/canvas_loader.gif'); background-size: 100px; background-repeat: no-repeat; background-position:center;width:100%;height:100%;position: absolute; display:flex;z-index: 20;background-color: black; justify-content: center; align-items: center;`
+    divLoader.id = 'canvas-loader'
+
+    setTimeout(()=>{
+        let g_ = gEI('canvas-loader')
+        let h1 = cE('h1')
+        h1.innerHTML = 'Just a moment, almost there...';
+        h1.style = 'color:white;display: inline-block;font-size: 2rem;position:absolute; bottom:30%;'
+        g_.insertAdjacentElement('afterbegin', h1)
+
+        setTimeout(()=>{
+            h1.innerHTML = 'Maps are pretty big <3...';
+            setTimeout(()=>{
+                h1.innerHTML = 'Furries are the superior race...';
+                setTimeout(()=>{
+                    h1.innerHTML='who said that?...';
+                    setTimeout(()=>{
+                        h1.innerHTML="'OwO'";
+                        setTimeout(()=>{
+                            if(!img.complete){
+                                window.location.reload();
+                            }
+                        },5000)
+                    },8000)
+                },800)
+            },8000)
+        },8000)
+    },5000)
+    
+    canvasContainer.insertAdjacentElement('beforeend', divLoader)
+}
+canvasLoading();
+
 // Mouse Window Position
 
 let windowMousePos = {
@@ -626,7 +675,7 @@ function onS0(){
     window.addEventListener('mousedown', onMouseClick)
     window.addEventListener("mouseup", onMouseEnd)
 }
-onS0();
+// onS0();
 
 function offS0(){
     window.removeEventListener('mousedown', onMouseClick);
@@ -711,7 +760,8 @@ function onMouseEnd(e){
     isDown = false
 
     imgPos.x = tilePosition.tileX * -tileSize;
-    imgPos.y = tilePosition.tileY * -tileSize
+    imgPos.y = tilePosition.tileY * -tileSize;
+
 }
 
 // END DRAGGING ENGINE
@@ -897,7 +947,7 @@ function exitNoteState(){
 
     isSelectionOn = false
     onScrollZoom();
-    onS0();
+    // onS0();
 }
 
 // Creates Fields for input of Notes Details
@@ -974,7 +1024,7 @@ function submitNote(){
     }
     notes.push(toPush)
     exitNoteState();
-    onS0();
+    // onS0();
     onScrollZoom();
     // drawNotes = drawNotesScreen(x,y,w,h)
 
@@ -1082,7 +1132,6 @@ function cursorNoteMessage(noteInfo, x, y, e){
 // Player Character
 
 // Player List - TO BE DONE ON DB
-let playerList = []
 
 const playersBtn = document.getElementById('players');
 
@@ -1120,9 +1169,6 @@ function exitPlayerMenu(e){
 function playerMenu(e){
     // Stop the Listeners for Drag and Doubling
     playersBtn.removeEventListener('click', playerMenu);
-    // canvas.removeEventListener('mousedown', onMouseClick)
-    // canvas.removeEventListener("mouseup", onMouseEnd)
-
 
     // Add New Event Listener to Exit with Icon
     playersBtn.addEventListener('click', exitPlayerMenu);
@@ -1145,22 +1191,7 @@ function playerMenu(e){
     playerList.id = 'player-list'
     playerMenuCont.appendChild(playerList);
 
-    getPlayerList(playerList);
-
-}
-
-// Get Player List and Add it
-
-function getPlayerList(list){
-
-    list.innerHTML = ''
-    for(let el of playerList){
-        // console.log(el)
-        let div = document.createElement('div');
-        div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.playerName}</h1><p class='player-classRace'>${el.class}/${el.race}</p><div class='hp-bar'></div><div class='player-stats'><p class='player-hp'>HP: ${el.HP}</p><p class='player-speed'>SP: ${el.speed}</p></div></div><a class='player-img-container' onclick=createToken(event) name=${el.playerName}><img class='player-img' name='${el.playerName}' src='${el.img}'></a>`
-        div.className = 'player-list-item'
-        list.appendChild(div)
-    }
+    getPlayerList();
 
 }
 
@@ -1456,47 +1487,6 @@ function isPlayerExists(Pname){
         if(el.playerName === Pname.value){
             return true
         }
-    }
-}
-
-// Submit Players
-
-function submitPlayer(){
-
-    let Pname = document.getElementById('inputPlayerName')
-    let Pclass = document.getElementById('inputPlayerClass')
-    let Prace = document.getElementById('inputPlayerRace')
-    let PhitPoints = document.getElementById('inputPlayerHP')
-    let Pspeed = document.getElementById('inputPlayerSpeed')
-    let Pimg = document.getElementById('tokenImg-reference')
-    let menuPlayerList = document.getElementById('player-list')
-    let Pmessage = document.getElementById('inputPlayerMessage')
-    if(Pname.value === '' || Pclass.value === '' || Prace.value === '' || PhitPoints.value <= 0 || Pspeed <= 0 || Pimg.src === ''){
-        Pmessage.innerHTML = 'Fill Out Details!';
-        Pmessage.classList.toggle('error')
-        setTimeout(()=>{
-            Pmessage.classList.toggle('error')
-        },1500)
-    }else if(isPlayerExists(Pname)){
-        Pmessage.innerHTML = 'Player Already Exists';
-        Pmessage.classList.toggle('error')
-        setTimeout(()=>{
-            Pmessage.classList.toggle('error')
-        },1500)
-    }else{
-        // console.log(Pimg.src)
-        let dP = {
-            playerName: Pname.value,
-            class: Pclass.value,
-            race: Prace.value,
-            HP: PhitPoints.value,
-            speed: Pspeed.value,
-            img: Pimg.src,
-        }
-        // console.log(dP)
-        playerList.push(dP)
-        getPlayerList(menuPlayerList);
-        exitEditPlayer();
     }
 }
 
@@ -1857,25 +1847,33 @@ function checkIfTokenExist(e){
 // State 1 - Token Select
 
 function createToken(e){
-
-    img_t = new Image();
-    img_t.src = e.target.src;
-    // console.log(img_t)
     pName = e.target.name
-
-    // console.log(e.target.name)
-    // console.log(existsIndex)
-    if(checkIfTokenExist(e)){
-        // console.log(existsIndex);
-        tokens.splice(existsIndex,1);
-        tokenPos.splice(existsIndex, 1);
+    let isRightOwner = false;
+    for(let el of characters){
+        if(el.name === pName && el.username === Username){
+            isRightOwner = true;
+        }
     }
-    canvas.removeEventListener('mousedown', onMouseClick)
-    canvas.removeEventListener("mouseup", onMouseEnd)
 
-    canvas.addEventListener('mousedown', onTokenDown)
-    canvas.addEventListener('mousemove', onTokenMove)
-    // console.log(e.target.src)
+    if(isRightOwner){
+        img_t = new Image();
+        img_t.src = e.target.src;
+        // console.log(img_t)
+    
+        // console.log(e.target.name)
+        // console.log(existsIndex)
+        if(checkIfTokenExist(e)){
+            // console.log(existsIndex);
+            tokens.splice(existsIndex,1);
+            tokenPos.splice(existsIndex, 1);
+        }
+        canvas.removeEventListener('mousedown', onMouseClick)
+        canvas.removeEventListener("mouseup", onMouseEnd)
+    
+        canvas.addEventListener('mousedown', onTokenDown)
+        canvas.addEventListener('mousemove', onTokenMove)
+        // console.log(e.target.src)
+    }
 }
 
 function onTokenMove(e){
@@ -1910,9 +1908,12 @@ function onTokenDown(e){
     }
 
     tokenPos.push(tPos)
-
+    
     drawToken = new doDrawToken(x,y,tileSize,tileSize,img_t, pName)
     tokens.push(drawToken);
+    
+    // Emit Change
+    positionChangeEmit(tPos)
 
     if(isTokenReselect){
         canvas.removeEventListener('mousemove', reselectTokenOnMove)
@@ -1926,7 +1927,7 @@ function onTokenDown(e){
     isTokenSelected = false;
     areTokensOnMap = true;
     tokenContextMenu();
-    onS0();
+    // onS0();
 
     if(!isListeningForReselect){
         isListeningForReselect = true;
@@ -2008,55 +2009,74 @@ function hoverToken(e){
 let reselecImg_t = undefined;
 
 // Check if click was over Token
-
-function overToken(e){
-
-    if(e.buttons === 1){
-        let x = whereAmI(e).tileX;
-        let y = whereAmI(e).tileY;
-    
-        for(i=0;i<tokenPos.length;i++){
-            if(tokenPos[i].x === x && tokenPos[i].y === y){
-                reselectToken(e)
-                pName = tokenPos[i].player;
-                tokenPos.splice(i, 1)
-                tokens.splice(i,1)
-            }
-        }
-    }
-}
+// function overToken(e){
+//     let tokenName = undefined;
+//     if(!tokenPos[whichToken(e)]){
+//         tokenName = 'NA'
+//     }else{
+//         tokenName = tokenPos[whichToken(e)].player;
+//         for(let el of characters){
+//             if(el.name === tokenName && el.username === Username){
+//                 if(e.buttons === 1){
+//                     let x = whereAmI(e).tileX;
+//                     let y = whereAmI(e).tileY;
+                
+//                     for(i=0;i<tokenPos.length;i++){
+//                         if(tokenPos[i].x === x && tokenPos[i].y === y){
+//                             reselectToken(e)
+//                             pName = tokenPos[i].player;
+//                             tokenPos.splice(i, 1)
+//                             tokens.splice(i,1)
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
 
 // State 3 - onTokenReselect
-
 function reselectToken(e){
-    offS0();
+    let isRightOwner = false;
 
-    // console.log(whichToken(e))
-    // tokenPos[whichToken(e)].player
-
-    img_t = new Image();
-    
-    for(let el of playerList){
-        if(el.playerName === tokenPos[whichToken(e)].player){
-            img_t.src = el.img
-        }
+    for(let el of characters){
+        if(el.name === tokenPos[whichToken(e)].player && el.username === Username){
+            isRightOwner = true;
+        }    
     }
 
-    let x = whereAmI(e).tileX*tileSize;
-    let y = whereAmI(e).tileY*tileSize;
-    let w = tileSize
-    let h = tileSize
-
-    drawToken = new doDrawToken(x,y,w,h,img_t)
-
-    isTokenReselect = true
-    isTokenSelected = true
+    if(isRightOwner){
+        offS0();
+        img_t = new Image();
+        
+        for(let el of characters){
+            if(el.name === tokenPos[whichToken(e)].player && el.username === Username){
+                img_t.src = el.token
+            }
+        }
     
-    canvas.addEventListener('mouseup', onTokenDown)
-    canvas.addEventListener('mousemove', reselectTokenOnMove)
+    
+        let x = whereAmI(e).tileX*tileSize;
+        let y = whereAmI(e).tileY*tileSize;
+        let w = tileSize
+        let h = tileSize
+    
+        drawToken = new doDrawToken(x,y,w,h,img_t)
+    
+        isTokenReselect = true
+        isTokenSelected = true
+        
+        canvas.addEventListener('mouseup', onTokenDown)
+        canvas.addEventListener('mousemove', reselectTokenOnMove)
+
+    }
+    // console.log(whichToken(e))
+    // tokenPos[whichToken(e)].player
 }
 
 function reselectTokenOnMove(e){
+    let isTokenOverAnother = false;
+
     let x = whereAmI(e).tileX*tileSize;
     let y = whereAmI(e).tileY*tileSize;
 
@@ -2068,21 +2088,19 @@ function reselectTokenOnMove(e){
     
     for(let el of tokenPos){
         if(x_ === el.x && y_ === el.y){
-            isTokenSelected = false
+            isTokenOverAnother = true;
+            isTokenSelected = false;
             exitListenTokenReselect();
-            canvas.removeEventListener('mousedown', onTokenDown)
-            
-        }else{
-            if(!isTokenSelected){
-                isTokenSelected = true
-                listenTokenReselect();
-                canvas.addEventListener('mousedown', onTokenDown)
-            }
+            canvas.removeEventListener('mouseup', onTokenDown)
         }
     }
-    drawToken = new doDrawToken(x,y,w,h,img_t)
-
-
+    if(!isTokenOverAnother){
+        isTokenSelected = true
+        isTokenSelected = true
+        listenTokenReselect();
+        canvas.addEventListener('mouseup', onTokenDown)
+        drawToken = new doDrawToken(x,y,w,h,img_t)
+    }
 }
 
 function deleteToken(e){
@@ -2093,10 +2111,11 @@ function deleteToken(e){
             tokenPos.splice(i, 1)
             tokens.splice(i, 1)
             resetTokenCM(e);
+            emitTokenRemoval(e)
             // Remove Event Listeners
             canvas.removeEventListener('mousedown', resetTokenCM)    
             // Back to state0
-            onS0();
+            // onS0();
             tokenContextMenu();
 
             if(tokens.length === 0){
@@ -2112,7 +2131,6 @@ function deleteToken(e){
 
 // Token Information Context Menu
 // Token Hover Animation
-
 function isOnTokenCM(e){
     let x = whereAmI(e).tileX;
     let y = whereAmI(e).tileY;
@@ -2161,7 +2179,7 @@ function resetTokenCM(e){
     if(isOnTokenCM(e)){
         let cMenu = document.getElementById('cMenu')
         cMenu.remove();
-        onS0();
+        // onS0();
         if(areTokensOnMap){
             canvas.removeEventListener('mousedown', resetTokenCM)    
             tokenContextMenu();
@@ -2171,59 +2189,70 @@ function resetTokenCM(e){
         cMenu.remove();
         canvas.removeEventListener('mousedown', resetTokenCM)
         tokenContextMenu();
-        onS0();
+        // onS0();
     }
 }
 
 // Actions on CM
 
 function tokenCMOnDown(e){
-    if(e.buttons === 2){
-        if(isOnTokenCM(e)){
-            exitTokenCM();
-            offS0();
-
-            let x = whereAmI(e).tileX*tileSize + imgPos.x;
-            let y = whereAmI(e).tileY*tileSize + imgPos.y;
-        
-            // Token 
     
-            canvas.addEventListener('mousedown', resetTokenCM)    
-            let cMenu = document.createElement('div')
-            cMenu.className = 'cMenu'
-            cMenu.id = 'cMenu'
-            cMenu.name = tokenPos[whichToken(e)].player
-            cMenu.style = `top:${y}px;left:${x+tileSize}px;width:fit-content;height:fit-content;`
-            canvasMain.insertAdjacentElement('afterbegin' ,cMenu);
-    
-            let button1 = document.createElement('a')
-            button1.innerHTML = 'Move'
-            button1.className = 'cBtn move'
-            cMenu.appendChild(button1);
-
-            let button2 = document.createElement('a')
-            button2.innerHTML = 'Action'
-            button2.className = 'cBtn move'
-            cMenu.appendChild(button2);
-
-            let button3 = document.createElement('a')
-            button3.innerHTML = 'Shit'
-            button3.className = 'cBtn move'
-            cMenu.appendChild(button3);
-
-            let button4 = document.createElement('a')
-            button4.innerHTML = 'Player Sheet'
-            button4.className = 'cBtn move'
-            cMenu.appendChild(button4);
-
-            let button5 = document.createElement('a');
-            button5.innerHTML = 'Remove';
-            button5.id = 'Remove';
-            button5.name = tokenPos[whichToken(e)].player
-            button5.className = 'cBtn remove';
-            button5.onclick = deleteToken
-            cMenu.appendChild(button5);
-        }    
+    let tokenName = undefined;
+    if(!tokenPos[whichToken(e)]){
+        tokenName = 'NA'
+    }else{
+        tokenName = tokenPos[whichToken(e)].player
+        for(let el of characters){
+            if(el.name === tokenName && el.username === Username){
+                if(e.buttons === 2){
+                    if(isOnTokenCM(e)){
+                        exitTokenCM();
+                        offS0();
+            
+                        let x = whereAmI(e).tileX*tileSize + imgPos.x;
+                        let y = whereAmI(e).tileY*tileSize + imgPos.y;
+                    
+                        // Token 
+                
+                        canvas.addEventListener('mousedown', resetTokenCM)    
+                        let cMenu = document.createElement('div')
+                        cMenu.className = 'cMenu'
+                        cMenu.id = 'cMenu'
+                        cMenu.name = tokenPos[whichToken(e)].player
+                        cMenu.style = `top:${y}px;left:${x+tileSize}px;width:fit-content;height:fit-content;`
+                        canvasMain.insertAdjacentElement('afterbegin' ,cMenu);
+                
+                        let button1 = document.createElement('a')
+                        button1.innerHTML = 'Move'
+                        button1.className = 'cBtn move'
+                        cMenu.appendChild(button1);
+            
+                        let button2 = document.createElement('a')
+                        button2.innerHTML = 'Action'
+                        button2.className = 'cBtn move'
+                        cMenu.appendChild(button2);
+            
+                        let button3 = document.createElement('a')
+                        button3.innerHTML = 'Shit'
+                        button3.className = 'cBtn move'
+                        cMenu.appendChild(button3);
+            
+                        let button4 = document.createElement('a')
+                        button4.innerHTML = 'Player Sheet'
+                        button4.className = 'cBtn move'
+                        cMenu.appendChild(button4);
+            
+                        let button5 = document.createElement('a');
+                        button5.innerHTML = 'Remove';
+                        button5.id = 'Remove';
+                        button5.name = tokenPos[whichToken(e)].player
+                        button5.className = 'cBtn remove';
+                        button5.onclick = deleteToken
+                        cMenu.appendChild(button5);
+                    }    
+                }
+            }
+        }
     }
 }
 
@@ -2520,7 +2549,6 @@ function phonebook(u_){
     }
 }
 
-
 // Receive Messages
 
 socket.on('receive-message', (message, room, username_)=>{
@@ -2533,9 +2561,9 @@ socket.on('receive-message', (message, room, username_)=>{
         // Notification
         notifyMsg(room);
 
-        let user = room
+        let user = username_
 
-        let currentChatbox = gEI(user);
+        let currentChatbox = gEI(room);
         let p_ = cE('p');
         p_.className = 'chat-msg';
         p_.innerHTML = `<span style="color: tomato;">${user}: </span>${message}`
@@ -2685,6 +2713,441 @@ function notifyMsg(e){
 
 }
 
+// Position Change Process
+
+socket.on('position-update', (tpos)=>{
+    positionUpdate(tpos);
+})
+
+// Image Position
+function updateImagePosition(data){
+
+    imgPos.x = data.x * -tileSize;
+    imgPos.y = data.y * -tileSize;
+
+}
+
+// Emitter
+function positionChangeEmit(tpos){
+
+    // UpdateDB
+    async function positionDBUpdate(){
+        try {
+            const {data} = await axios.post('/edit-character', {
+                campaign: allChat,
+                username: Username,
+                characterName: tpos.player,
+                position: tpos,
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    positionDBUpdate();
+
+    socket.emit('position-change', (tpos))
+}
+
+// Update Position
+function positionUpdate(tpos){
+
+    let isUpdated = false;
+    let imgUpdate = new Image();
+    
+    for(let el of tokens){
+        if(el.index === tpos.player){
+            console.log('first check')
+            isUpdated = true;
+            tokens.splice(tokens.indexOf(el), 1)
+            
+            for(let ul of characters){
+                console.log(ul, tpos)
+                if(ul.name === tpos.player){
+                    imgUpdate.src = ul.token;
+                    endUpdate();
+                }
+            }
+
+            function endUpdate(){
+                console.log('Times')
+                let x_ = tpos.x * tileSize;
+                let y_ = tpos.y * tileSize;
+    
+                drawToken = new doDrawToken(x_,y_,tileSize,tileSize,imgUpdate, tpos.player)
+    
+                // Delete from Tokens
+                tokens.push(drawToken)
+                for(let ol of tokenPos){
+                    if(ol.player === tpos.player){
+                        ol.x = tpos.x;
+                        ol.y = tpos.y;
+                        console.log('First')
+                    }
+                }
+            }
+        }
+    }
+    if(!isUpdated){
+        areTokensOnMap = true
+        console.log('Second')
+        for(let el of characters){
+            if(el.name === tpos.player){
+                imgUpdate.src = el.token
+            }
+        }
+        tokenPos.push(tpos)
+        let x = tpos.x *tileSize;
+        let y = tpos.y *tileSize;
+        drawToken = new doDrawToken(x,y,tileSize,tileSize,imgUpdate, tpos.player)
+        tokens.push(drawToken);
+    }
+}
+
+// Listen for Token Removal
+
+socket.on('remove-token', tokenName=>{
+    tokenRemoval(tokenName)
+})
+
+// Emit Token Removal
+
+function emitTokenRemoval(e){
+    let tokenName = e.target.name;
+    socket.emit('token-removed', tokenName);
+}
+
+// Remove Token
+function tokenRemoval(tokenName){
+    console.log(tokenName)
+    for(i=0;i<tokenPos.length;i++){
+        if(tokenName === tokenPos[i].player){
+
+            tokenPos.splice(i, 1)
+            tokens.splice(i, 1)
+
+            if(tokens.length === 0){
+                areTokensOnMap = false
+                isTokenSelected = false
+                exitTokenCM();
+            }
+        }
+    }
+}
+
+// Refresh Players Positions
+function refreshPlayers(){
+    console.log(characters)
+
+    // Create the Tokens and Add the TokenPos
+
+    for(let el of characters){
+        if(el.position){
+            let imgUpdate = new Image();
+            imgUpdate.src = el.token;
+            let x_ = el.position.x * tileSize;
+            let y_ = el.position.y * tileSize;
+            let name = el.name;
+            
+            drawToken = new doDrawToken(x_,y_,tileSize,tileSize,imgUpdate, name)
+            tokenPos.push(el.position);
+            tokens.push(drawToken)
+            areTokensOnMap = true
+            tokenContextMenu();
+
+            if(!isListeningForReselect){
+                isListeningForReselect = true;
+                listenTokenReselect();
+            }
+        
+
+        }
+    }
+
+
+}
+
 /* PLAYER SITE
 THIS IS FUNCTIONALITY TO PLAYERS ONLY */
 
+// Create Character Site
+
+let addCharMain = gEI('character-creator')
+let addCharLVL = gEI('addPlayer-level')
+let addCharAC = gEI('addPlayer-armorClass')
+let addCharHP = gEI('inputPlayerHP')
+let addCharSP = gEI('inputPlayerSpeed')
+let addCharName = gEI('char-name')
+let addCharClass = gEI('char-class')
+let addCharRace = gEI('char-race')
+let addCharToken = gEI('tokenImg-reference')
+let messageInfo = gEI('message-info')
+
+// Function of Left Arrows
+function leftArrow(e){
+    let activate = gEI(e.target.name)
+    if(activate.value <= 0){
+        activate.value = 0
+    }else{
+        activate.value--
+    }
+}
+
+// Function of Right Arrows
+function rightArrow(e){
+    let activate = gEI(e.target.name)
+    if(activate.value >= 0 && activate.value < 999){
+        activate.value++
+    }
+}
+
+// Prevent Letters from being in Numbers Inputs
+function preventLetters(e){
+    let reg = /[A-Za-z\%\$\#\@\!\^\&\*\(\)\_\-\+\[\]]/g
+    if(reg.test(e.data)){
+        e.originalTarget.value = 0
+    }
+}
+
+// Preview Tokens
+function tokenPreview(e){
+
+    let tokenInput = gEI('tokenImg');
+    let tokenLabel = gEI('tokenImg-label');
+    let tokenImgReference = gEI('tokenImg-reference')
+
+    
+    let files = e.target.files[0];
+    let form = new FormData();
+    form.append('img-edit', files, files.name)
+    
+    async function sendImg(){
+        try {
+            const {data} = await axios.post('/img-process', form)
+            tokenLabel.innerHTML = '';
+            if(tokenLabel.className != 'tokenImg-label preview'){
+                tokenLabel.classList.toggle('preview')
+            }
+            tokenLabel.style = `background-image: url(${data.URI})`
+            tokenImgReference.src = data.URI
+            
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    sendImg();
+
+}
+
+// Add Language to the List
+function languageListAdd(e){
+    // ADD A DIV TO LIST AND PUSH TO ARRAY
+    let data = e.originalTarget.value
+
+    if(languageList.indexOf(data) === -1){
+        let createOption = cE('div');
+        createOption.className = 'cont-langlist'
+        createOption.id = data;
+        createOption.innerHTML = `<p class='p-langlist'>${data}</p><a name='${data}' class='del-langlist' onclick='languageListRemove(event)'>X</a>`
+        let addPlayerLangList = gEI('addPlayer-languageList');
+        languageList.push(data);
+        addPlayerLangList.appendChild(createOption)
+    }
+}
+
+// Remove Language List
+function languageListRemove(e){
+
+    let name = e.originalTarget.name;
+    let index = languageList.indexOf(name)
+    if(index >= 0){
+        languageList.splice(index, 1)
+        let removal_ = gEI(name);
+        removal_.remove();
+    }
+}
+
+// Create Character
+function createCharacter(e){
+    
+    if(addCharName.value === ''|| addCharClass.value === '' || addCharRace.value === '' || addCharLVL.value === 0 || addCharAC.value === 0 || addCharHP.value === 0 || addCharSP.value === 0 || languageList.length === 0 || addCharToken.src === ''){
+        if(messageInfo.className != 'message-info error'){
+            messageInfo.classList.toggle('error')
+            messageInfo.innerHTML = 'Fill out all details please!'
+            setTimeout(()=>{
+                messageInfo.classList.toggle('error')
+                messageInfo.innerHTML = ''
+            },2500)
+        }
+    }else{
+        // DataPackage with Character
+        let datapackage = {
+            campaign: allChat,
+            username: Username,
+            name: addCharName.value,
+            class: addCharClass.value,
+            race: addCharRace.value,
+            level: addCharLVL.value,
+            languages: languageList,
+            deathsaves: {
+                success: 0,
+                fail: 0,
+            },
+            hitpoints: addCharHP.value,
+            speed: addCharSP.value,
+            armorClass: addCharAC.value,
+            token: addCharToken.src,
+        }
+        
+        // Send to Server
+        async function sendDBCharacter(e){
+            try {
+                const {data} = await axios.post('/new-character', datapackage)
+                console.log(data)
+                
+                if(data.status != 'Character Already Exists'){
+                    // Hide Create Character Screen
+                    addCharMain.classList.toggle('hide')
+                    setTimeout(()=>{
+                        addCharMain.remove();
+                    },500)
+                    
+                    // Add Player Element to Character List
+                    addCharacterToList(datapackage)
+                    
+                    // Emit this to other players
+                    socket.emit('send-character', datapackage)
+                }else{
+                    messageInfo.classList.toggle('error')
+                    messageInfo.innerHTML = 'Character Already Exists';
+                    setTimeout(()=>{
+                        messageInfo.classList.toggle('error')
+                    },2500)
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        
+        sendDBCharacter();
+    }
+    
+}
+
+// Add Character to Player List
+function addCharacterToList(char){
+    characters.push(char)
+}
+
+// Get Player List and Add it
+function getPlayerList(){
+    let list = gEI('player-list')
+    list.innerHTML = ''
+    for(let el of characters){
+        // console.log(el)
+        let div = document.createElement('div');
+        div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.name}</h1><p class='player-classRace'>${el.class}/${el.race}</p><div class='hp-bar'></div><div class='player-stats'><p class='player-hp'>HP: ${el.hitpoints}</p><p class='player-speed'>AC: ${el.armorClass}</p></div></div><a class='player-img-container' onclick=createToken(event) name=${el.name}><img class='player-img' name='${el.name}' src='${el.token}'></a>`;
+        div.className = 'player-list-item'
+        list.appendChild(div)
+    }
+
+}
+
+// Submit Players
+function submitPlayer(){
+
+    let Pname = document.getElementById('inputPlayerName')
+    let Pclass = document.getElementById('inputPlayerClass')
+    let Prace = document.getElementById('inputPlayerRace')
+    let PhitPoints = document.getElementById('inputPlayerHP')
+    let Pspeed = document.getElementById('inputPlayerSpeed')
+    let Pimg = document.getElementById('tokenImg-reference')
+    let menuPlayerList = document.getElementById('player-list')
+    let Pmessage = document.getElementById('inputPlayerMessage')
+    if(Pname.value === '' || Pclass.value === '' || Prace.value === '' || PhitPoints.value <= 0 || Pspeed <= 0 || Pimg.src === ''){
+        Pmessage.innerHTML = 'Fill Out Details!';
+        Pmessage.classList.toggle('error')
+        setTimeout(()=>{
+            Pmessage.classList.toggle('error')
+        },1500)
+    }else if(isPlayerExists(Pname)){
+        Pmessage.innerHTML = 'Player Already Exists';
+        Pmessage.classList.toggle('error')
+        setTimeout(()=>{
+            Pmessage.classList.toggle('error')
+        },1500)
+    }else{
+        // console.log(Pimg.src)
+        let dP = {
+            playerName: Pname.value,
+            class: Pclass.value,
+            race: Prace.value,
+            HP: PhitPoints.value,
+            speed: Pspeed.value,
+            img: Pimg.src,
+        }
+        // console.log(dP)
+        playerList.push(dP)
+        getPlayerList(menuPlayerList);
+        exitEditPlayer();
+    }
+}
+
+// Check if Player has Character
+async function playerHasCharacter(){
+    try {
+        const {data} = await axios.post('/all-characters', {campaign: allChat})
+        let isExists = false
+        for(let el of data){
+            characters.push(el)
+            if(el.username === Username){
+                isExists = true;
+            }
+        }
+        if(!isExists){
+            addCharMain.classList.toggle('hide')
+        }else{
+            addCharMain.remove();
+            refreshPlayers();
+            getCampaign();
+        }
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+socket.on('blackout-switch', blackoutSwitch=>{
+    blackout(blackoutSwitch)
+})
+
+function blackout(data){
+    let blackout = gEI('blackout');
+    if(data.status === "on"){
+        blackout.classList.toggle(data.status)
+    }else{
+        blackout.classList.toggle('on')
+    }
+}
+
+async function getCampaign(){
+    try {
+        const {data} = await axios.post('/getCampaign', {
+            campaign: allChat,
+        })
+        isBlackout = data.blackout;
+        console.log(data)
+
+        checkBlackOut()
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+
+function checkBlackOut(){
+    let blackout = gEI('blackout');
+    if(isBlackout){
+        blackout.classList.toggle('on')
+    }
+}
+// checkBlackOut();

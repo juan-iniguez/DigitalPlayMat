@@ -1447,3 +1447,25 @@ option:disabled{
     color:white;
 }
 
+.blackout-icon{
+    background-image: url('/img/onbutton.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 35px;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    margin-left: 2rem;
+    opacity: .5;
+    filter: invert();
+}
+
+.blackout-icon:hover{
+    opacity: 1;
+}
+
+.blackout-icon.on{
+    background-color: rgb(121, 167, 172);
+    border-radius: 25px;
+    opacity: 1;
+}

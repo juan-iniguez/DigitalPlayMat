@@ -1,5 +1,9 @@
 <div id='main-container'>
-    <div id='login-card' class="login-card">
+    <div id='blackout' class="blackout">
+        <h1 style="z-index: 1;">Wait for the DM</h1>
+        <div class="dmwait-load"></div>
+    </div>
+    <div style="z-index: 6" id='login-card' class="login-card">
         <h1>Log In for Combat!</h1>
         <h2>I can't let you in until you log in cowboy...</h2>
         <div class="login-container">
@@ -13,6 +17,65 @@
                 </div>
                 <p id="message" class="message"></p>
             </form>
+        </div>
+    </div>
+    <div id='character-creator' class='character-creator hide'>
+        <div class="character-creator-container">
+            <div class='character-creator-card'>
+                <p id='message-info' class="message-info"></p>
+                <h1 class="char-hero">Create your Character</h1>
+                <div class='char-fields'>
+                    <div style="display: flex;flex-direction: column;align-items: flex-start;width: 60%;height: 100%;">
+                        <label class="char-labels">Name</label>
+                        <input class="char-input" id='char-name' type="text">
+                        <label class="char-labels">Class</label>
+                        <input class="char-input" id='char-class' type="text">
+                        <label class="char-labels">Race</label>
+                        <input class="char-input" id='char-race' type="text">
+                    </div>
+                    <div style="display: flex;flex-direction: column;align-items: center;width: 40%;height: 100%;">
+                        <label for="tokenImg" class="tokenImg-label" id="tokenImg-label">Click to Upload Icon</label>
+                        <input id="tokenImg" accept=".jpg,.png,.jpeg" class="tokenImg" type="file" onchange="tokenPreview(event)">
+                        <img id="tokenImg-reference" class="tokenImg-reference" name="tokenImg" style="">
+                    </div>
+                </div>
+                <div class="char-numbers">
+                    <div style="display: flex;flex-direction: column;justify-content: flex-start;align-items: flex-start;width: 70%;">
+                        <label class="char-labels">Languages</label>
+                        <select id="addPlayer-language" onchange="languageListAdd(event)" class="addPlayer-input-language"><option value="" disabled="">Select a Language...</option><option disabled="" value="Common Languages">Common Languages</option><option value="Dwarvish">Dwarvish</option><option value="Elvish">Elvish</option><option value="Giant">Giant</option><option value="Gnomish">Gnomish</option><option value="Goblin">Goblin</option><option value="Halfling">Halfling</option><option value="Orc">Orc</option><option disabled="" value="Uncommon Languages">Uncommon Languages</option><option value="Abyssal">Abyssal</option><option value="Celestial">Celestial</option><option value="Draconic">Draconic</option><option value="Deep Speech">Deep Speech</option><option value="Infernal">Infernal</option><option value="Primordial">Primordial</option><option value="Sylvan">Sylvan</option><option value="Undercommon">Undercommon</option></select>
+                        <div class="addPlayer-languageList" id="addPlayer-languageList"></div>
+                    </div>
+                    <div style="display: flex;flex-direction: column;justify-content: center;align-items: center;width: 30%;height: 100%;">
+                        <div class="addPlayer-stats">
+                            <label class="addPlayer-label">LVL</label>
+                            <div class="addPlayer-HPc">
+                                <a name="addPlayer-level" class="addPlayer-Speed-LA" onclick="leftArrow(event)"></a>
+                                <input type="number" min="0" value="0" id="addPlayer-level" oninput="preventLetters(event)" class="addPlayer-input number">
+                                <a name="addPlayer-level" class="addPlayer-Speed-RA" onclick="rightArrow(event)"></a>
+                            </div>
+                            <label class="addPlayer-label">AC</label>
+                            <div class="addPlayer-HPc">
+                                <a name="addPlayer-armorClass" class="addPlayer-Speed-LA" onclick="leftArrow(event)"></a>
+                                <input type="number" min="0" value="0" id="addPlayer-armorClass" oninput="preventLetters(event)" class="addPlayer-input number">
+                                <a name="addPlayer-armorClass" class="addPlayer-Speed-RA" onclick="rightArrow(event)"></a>
+                            </div>
+                            <label class="addPlayer-label">HP</label>
+                            <div class="addPlayer-HPc">
+                                <a name='inputPlayerHP' class="addPlayer-HP-LA" onclick="leftArrow(event)"></a>
+                                <input class="addPlayer-input number" id="inputPlayerHP" oninput="preventLetters(event)" type="number" min="0" value="0">
+                                <a name='inputPlayerHP' class="addPlayer-HP-RA" onclick="rightArrow(event)"></a>
+                            </div>
+                            <label class="addPlayer-label">SP</label>
+                            <div class="addPlayer-SPc">
+                                <a name="inputPlayerSpeed" class="addPlayer-Speed-LA" onclick="leftArrow(event)"></a>
+                                <input class="addPlayer-input number" id="inputPlayerSpeed" oninput="preventLetters(event)" type="number" min="0" value="0">
+                                <a name="inputPlayerSpeed" class="addPlayer-Speed-RA" onclick="rightArrow(event)"></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a class="btn btn-primary addPlayer-submit" id="inputPlayerSubmit" onclick="createCharacter(event)">Add</a>
+            </div>
         </div>
     </div>
     <div id='canvas-container'>

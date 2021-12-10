@@ -36,6 +36,7 @@ const upload = multer({ storage: storage });
 const upload_ = multer({ dest: __dirname + '/public/maps/' })
 
 const { diskStorage } = require('multer');
+const { SocketAddress } = require('net');
 
 const sessionStore = MongoStore.create({
     mongoUrl: process.env.DND_DB,
@@ -99,16 +100,30 @@ io.on('connection', socket=>{
     })
     socket.on('new-user', (username , privateID)=>{
         socket.broadcast.emit("user-connected", username , privateID)
-        // console.log(`Username of User New Connection: ${username}`)
     })
     socket.on('user-list', Users=>{
-        // console.log(Users)
         socket.broadcast.emit("phonebook", Users)
     })
     socket.on('disconnect', ()=>{
         var i = allClients.indexOf(socket.id);
         allClients.splice(i, 1);
         socket.broadcast.emit('user-disconnected', socket.id)
+    })
+    socket.on('send-character', character=>{
+        socket.broadcast.emit("new-character", character)
+    })
+    socket.on('position-change', (tpos)=>{
+        socket.broadcast.emit('position-update', (tpos));
+    })
+    socket.on('token-removed', tokenName=>{
+        socket.broadcast.emit('remove-token', tokenName)
+    })
+    socket.on('img-position', imgPos=>{
+        socket.broadcast.emit('change-imgPos', imgPos)
+    })
+    socket.on('blackout', blackout=>{
+        console.log(blackout)
+        socket.broadcast.emit('blackout-switch', blackout)
     })
 })
 
@@ -403,6 +418,52 @@ router.post('/createCampaign', (req,res,next)=>{
 
 })
 
+router.post('/getCampaign', (req,res,next)=>{
+
+    let campaign = req.body.campaign
+
+    async function getCampaign(){
+        try {
+            const campaign_ = await Campaign.findOne({campaign: campaign})
+            res.send(campaign_)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    getCampaign();
+})
+
+router.post('/updateCampaign', (req,res,next)=>{
+    let data = req.body;
+    let campaign = req.body.campaign;
+    
+    /* REQS: 
+    campaign
+    ANY STAT TO CHANGE
+    */
+    
+    // Polyfill Change
+    async function editCharacter(key, da){
+        try {
+            let updateCampaign = await Campaign.findOneAndUpdate({ campaign: campaign}, {$set: {[key]: da}})
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    // Parse the keys of the fields to be changed
+    for(let el of Object.keys(data)){
+        if(el !== 'campaign' || el !== 'username'){
+            if(el === 'campaign' || el === 'username'){
+            }else{
+                let d_ = data[el]
+                editCharacter(el ,d_)
+            }
+        }
+    }
+    res.send("Done");
+})
+
 router.post('/getMainCanvas', (req,res,next)=>{
     console.log(req.body.campaign)
 
@@ -425,10 +486,33 @@ router.post('/getMainCanvas', (req,res,next)=>{
 
 })
 
+router.post('/all-characters', (req,res,next)=>{
+    let campaign = req.body.campaign;
+    let datapackage = []
+
+    async function readChar(){
+        try {
+            const c = await Campaign.findOne({campaign: campaign});
+            if(c.characters.length === 0){
+                res.send('No Characters')
+            }else{
+                res.send(c.characters)
+            }
+        } catch (error) {
+            console.log(error)
+            res.send(error)
+        }
+    }
+    readChar();
+
+})
+
 // GET CHARACTER SHEET API - CRUD 
 
 // Create
 router.post('/new-character', (req,res,next)=>{
+
+    let campaign = req.body.campaign
 
     /* REQS:  
     campaign
@@ -458,18 +542,43 @@ router.post('/new-character', (req,res,next)=>{
         armorClass: req.body.armorClass,
         token: req.body.token,
     }
+    let isDouble = false
+    
+    function checkIfDouble(data){
+
+        for(let el of data.characters){
+            if(el.name === datapackage.name){
+                isDouble = true
+                res.send({status: 'Character Already Exists'})
+            }
+        }
+        if(!isDouble){
+            console.log('hello')
+            createNewCharacter();                
+        }
+    }
+
+    async function checkIfExists(){
+        try {
+            const data = await Campaign.findOne({campaign: campaign});
+
+            checkIfDouble(data);
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    checkIfExists();
 
     async function createNewCharacter(){
         try {
             let addCharacter = await Campaign.findOneAndUpdate({campaign: req.body.campaign}, {$push: {characters: datapackage}});
-
             res.send(`Character: ${req.body.name}`)
         } catch (error) {
             console.log(error)
             res.send(error)
         }
     }
-    createNewCharacter();
 })
 
 // Read
@@ -499,12 +608,10 @@ router.post('/read-character', (req,res,next)=>{
 router.post('/edit-character', (req,res,next)=>{
     let data = req.body;
     let campaign = req.body.campaign;
-    let username = req.body.username;
     let characterName = req.body.characterName
     
     /* REQS: 
     campaign
-    username
     characterName
     ANY STAT TO CHANGE
     */
@@ -524,9 +631,12 @@ router.post('/edit-character', (req,res,next)=>{
     // Parse the keys of the fields to be changed
     for(let el of Object.keys(data)){
         // console.log(data[el])
-        if(el != campaign || el != username){
-            let d_ = data[el]
-            editCharacter(el ,d_)
+        if(el !== 'campaign' || el !== 'username'){
+            if(el === 'campaign' || el === 'username'){
+            }else{
+                let d_ = data[el]
+                editCharacter(el ,d_)
+            }
         }
     }
     res.send("Done");
@@ -555,6 +665,46 @@ router.post('/delete-character', (req,res,next)=>{
     readCharacter();
 })
 
+// Character Position
+router.post('/mapPosition-update', (req,res,next)=>{
+    let data = req.body;
+    let campaign = req.body.campaign;
+    let username = req.body.username;
+    /* REQS: 
+    campaign
+    username
+    data : {
+        mapName:
+        x:
+        y:
+    }
+    */
+    
+    // Polyfill Change
+    async function editCampaign(key, da){
+        try {
+            if(da != '' || da){
+                // let set = `${key}.$`
+                let updateCampaign = await Campaign.findOneAndUpdate({ campaign: campaign ,"mapPositions.mapName": da.mapName }, {$set: {"mapPositions.$.x": da.x, "mapPositions.$.y": da.y}})
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    // Parse the keys of the fields to be changed
+    for(let el of Object.keys(data)){
+        if(el !== 'campaign' || el !== 'username'){
+            if(el === 'campaign' || el === 'username'){
+            }else{
+                let d_ = data[el]
+                editCampaign(el ,d_)
+            }
+        }
+    }
+    res.send("Done");
+
+})
 
 
 server.listen(PORT || 443, ()=>{console.log(`Server running on port ${PORT}`)})
