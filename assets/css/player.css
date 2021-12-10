@@ -1248,6 +1248,7 @@ label{
 /* New Shit */
 
 .chat-openArrow{
+    z-index: 50;
     position: absolute;
     display: flex;
     width: 50px;
@@ -1285,6 +1286,7 @@ label{
 }
 
 .chat-main-container{
+    z-index: 50;
     display: flex;
     position: absolute;
     flex-direction: column;

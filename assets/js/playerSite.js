@@ -30,6 +30,9 @@ socket.on("new-character", message=>{
 socket.on('change-imgPos', imgp=>{
     updateImagePosition(imgp);
 })
+socket.on('map-change', change=>{
+    onMapChange(change);
+})
 
 window.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -205,6 +208,7 @@ let allChat = ejs_id;
 //     allChat = allchat_temp
 //     console.log(allChat)
 // }
+let DM = undefined;
 let currentRoom = allChat;
 let Username = undefined;
 let UsersConnected = [];
@@ -3075,16 +3079,23 @@ function addCharacterToList(char){
 
 // Get Player List and Add it
 function getPlayerList(){
+
     let list = gEI('player-list')
     list.innerHTML = ''
     for(let el of characters){
-        // console.log(el)
-        let div = document.createElement('div');
-        div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.name}</h1><p class='player-classRace'>${el.class}/${el.race}</p><div class='hp-bar'></div><div class='player-stats'><p class='player-hp'>HP: ${el.hitpoints}</p><p class='player-speed'>AC: ${el.armorClass}</p></div></div><a class='player-img-container' onclick=createToken(event) name=${el.name}><img class='player-img' name='${el.name}' src='${el.token}'></a>`;
-        div.className = 'player-list-item'
-        list.appendChild(div)
+        if(el.username === DM){
+            let div = document.createElement('div');
+            div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.name}</h1><p class='player-classRace'>${el.class}/${el.race}</p></div><a class='player-img-container' onclick=createToken(event) name=${el.name}><img class='player-img' name='${el.name}' src='${el.token}'></a>`;
+            div.className = 'player-list-item'
+            list.appendChild(div)
+        }else{
+            // console.log(el)
+            let div = document.createElement('div');
+            div.innerHTML = `<div class='player-info'><h1 class='player-name'>${el.name}</h1><p class='player-classRace'>${el.class}/${el.race}</p><div class='hp-bar'></div><div class='player-stats'><p class='player-hp'>HP: ${el.hitpoints}</p><p class='player-speed'>AC: ${el.armorClass}</p></div></div><a class='player-img-container' onclick=createToken(event) name=${el.name}><img class='player-img' name='${el.name}' src='${el.token}'></a>`;
+            div.className = 'player-list-item'
+            list.appendChild(div)
+        }
     }
-
 }
 
 // Submit Players
@@ -3169,6 +3180,7 @@ async function getCampaign(){
         const {data} = await axios.post('/getCampaign', {
             campaign: allChat,
         })
+        DM = data.DM
         isBlackout = data.blackout;
         checkBlackOut()
     } catch (error) {
@@ -3184,3 +3196,12 @@ function checkBlackOut(){
     }
 }
 // checkBlackOut();
+
+function onMapChange(change){
+    console.log(change)
+    img.src = `/maps/${change.name}`;
+    imgPos.x = change.pos.x;
+    imgPos.y = change.pos.y;
+    tilePosition.tileX = change.tile.tileX;
+    tilePosition.tileY = change.tile.tileY;
+}

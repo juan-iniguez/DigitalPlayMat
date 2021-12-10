@@ -1827,19 +1827,57 @@ function submitPlayer(){
     }else{
         // console.log(Pimg.src)
         let dP = {
-            playerName: Pname.value,
+            campaign: allChat,
+            name: Pname.value,
             class: Pclass.value,
             race: Prace.value,
-            HP: PhitPoints.value,
+            armorClass: ParmorClass.value,
+            deathsaves: {
+                success:0,
+                fail:0,
+            },
+            hitpoints: PhitPoints.value,
             speed: Pspeed.value,
             img: Pimg.src,
+            languages: PlangList,
+            token: Pimg.src,
+            level: Plevel.value,
+            username: Username,
         }
         // console.log(dP)
-        playerList.push(dP)
+        characters.push(dP)
+        socket.emit('send-character', dP)
         getPlayerList(menuPlayerList);
         exitEditPlayer();
+        sendDBCharacter(dP);
     }
 }
+
+// Send to Name to Server
+async function sendDBCharacter(datapackage){
+    try {
+        const {data} = await axios.post('/new-character', datapackage)
+        console.log(data)
+        
+        let inputMsg = gEI('inputPlayerMessage');
+
+        if(data.status != 'Character Already Exists'){
+            // Hide Create Character Screen
+
+            exitEditPlayer();
+            
+        }else{
+            inputMsg.classList.toggle('error')
+            inputMsg.innerHTML = 'Character Already Exists';
+            setTimeout(()=>{
+                inputMsg.classList.toggle('error')
+            },2500)
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 
 // Remove Player
 
@@ -3261,7 +3299,7 @@ function createMapsMenu(e){
                 campaign: allChat,
             })
             for(let el of data.maps){
-                createMapItems(el);
+                createMapItems(el, data.maps);
             }
             console.log(data)
         } catch (error) {
@@ -3275,14 +3313,18 @@ function createMapsMenu(e){
 
 function closeMapsMenu(){
     mapsContainer.classList.toggle('hide')
+    setTimeout(()=>{
+        mapsAvailable.innerHTML = '';
+    },300)
+
 }
 
-function createMapItems(data){
+function createMapItems(el, maps){
     
-    let snippet = `<a class="map-link" onclick='switchMaps(event)' name='${data.split('.')[0]}'>
-        <img src='/maps/${data}' class="map-item-img">
+    let snippet = `<a class="map-link" onclick='switchMaps(event)' name='${el}'>
+        <img src='/preview/${el}' class="map-item-img">
     </a>
-    <h2 class='map-title'>${data.split('.')[0]}</h2>
+    <h2 class='map-title'>${el.split('.')[0]}</h2>
     <div class='map-secondary'>
         <a class='map-secondary-link'>Update</a>
         <a class='map-secondary-link'>Rename</a>
@@ -3294,10 +3336,107 @@ function createMapItems(data){
     mapItem.innerHTML = snippet;
     mapsAvailable.appendChild(mapItem);
 
+    if(el === maps[maps.length -1]){
+        let newMapInput = cE('div');
+        newMapInput.className = 'map-item'
+        let snipp_ = `<label class="map-label" for='newMap'>Add Map</label>
+        <label for='map-name-input' class='map-label text'>Name</label>
+        <input id='map-name-input' type='text'>
+        <a class='map-submit' onclick='checkMapSubmit(event)'>Upload</a>
+        <input onchange='onMapChange(event)' id='newMap' name='newMap' type='file' style='width:0px;height:0px;opacity:0'>`
+        newMapInput.innerHTML = snipp_;
+        mapsAvailable.appendChild(newMapInput);
+    }
+
+}
+
+function onMapChange(e){
+    let files = e.target.files[0];
+    let form = new FormData();
+    let labelTarget = gEC('map-label')[0]
+    form.append('img-edit', files, files.name)
+
+    async function mapChange(){
+        try {
+            const {data} = await axios.post('/img-process', form);
+            console.log(data)
+            labelTarget.classList.toggle('preview');
+            labelTarget.innerHTML = ''
+            labelTarget.style = `background-image: url('${data.URI}');`
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    mapChange();
+}
+
+function checkMapSubmit(e){
+    let mapName = gEI('map-name-input');
+    let mapNameInput = gEI('newMap');
+
+    if(mapName.value === '' || !mapNameInput.files[0]){
+        console.log('missing fields')
+    }else{
+        mapSubmit(mapName, mapNameInput);
+    }
+}
+
+async function mapSubmit(mapName, mapNameInput){
+
+    let newForm = new FormData();
+    newForm.append('map', mapNameInput.files[0], mapName.value)
+
+    try {
+        const {data} = await axios.post('/addMap', newForm)
+        console.log(data)
+        
+        if(data){
+            const submitDB = await axios.post('/addMap-campaign', {
+                campaign: allChat,
+                map: data,
+            })
+            let mapItems = gEC('map-item');
+            let lastItem = mapItems[mapItems.length -1];
+
+            lastItem.innerHTML = '';
+
+            let snippet = `<a class="map-link" onclick='switchMaps(event)' name='${data}'>
+            <img src='/preview/${data}' class="map-item-img">
+        </a>
+        <h2 class='map-title'>${data.split('.')[0]}</h2>
+        <div class='map-secondary'>
+            <a class='map-secondary-link'>Update</a>
+            <a class='map-secondary-link'>Rename</a>
+            <a class='map-secondary-link'>Delete</a>
+        </div>`
+    
+
+            lastItem.innerHTML = snippet
+        }
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 function switchMaps(e){
-    console.log(e.target.parentNode.name)
+    console.log(e.target.parentNode.name);
+    let imgname = e.target.parentNode.name;
+
+    img.src = `/maps/${imgname}`
+    imgPos.x = 0;
+    imgPos.y = 0;
+    tilePosition.tileX = 0;
+    tilePosition.tileY = 0;
+
+    let dataPackage = {
+        pos: imgPos,
+        name: imgname,
+        tile: tilePosition,
+    }
+
+    socket.emit('change-map', dataPackage)
+
 }
 
 /* PLAYER SITE
@@ -3315,44 +3454,4 @@ function getPlayerList(){
         list.appendChild(div)
     }
 
-}
-
-// Submit Players
-function submitPlayer(){
-
-    let Pname = document.getElementById('inputPlayerName')
-    let Pclass = document.getElementById('inputPlayerClass')
-    let Prace = document.getElementById('inputPlayerRace')
-    let PhitPoints = document.getElementById('inputPlayerHP')
-    let Pspeed = document.getElementById('inputPlayerSpeed')
-    let Pimg = document.getElementById('tokenImg-reference')
-    let menuPlayerList = document.getElementById('player-list')
-    let Pmessage = document.getElementById('inputPlayerMessage')
-    if(Pname.value === '' || Pclass.value === '' || Prace.value === '' || PhitPoints.value <= 0 || Pspeed <= 0 || Pimg.src === ''){
-        Pmessage.innerHTML = 'Fill Out Details!';
-        Pmessage.classList.toggle('error')
-        setTimeout(()=>{
-            Pmessage.classList.toggle('error')
-        },1500)
-    }else if(isPlayerExists(Pname)){
-        Pmessage.innerHTML = 'Player Already Exists';
-        Pmessage.classList.toggle('error')
-        setTimeout(()=>{
-            Pmessage.classList.toggle('error')
-        },1500)
-    }else{
-        // console.log(Pimg.src)
-        let dP = {
-            playerName: Pname.value,
-            class: Pclass.value,
-            race: Prace.value,
-            HP: PhitPoints.value,
-            speed: Pspeed.value,
-            img: Pimg.src,
-        }
-        // console.log(dP)
-        playerList.push(dP)
-        getPlayerList(menuPlayerList);
-        exitEditPlayer();
-    }
 }

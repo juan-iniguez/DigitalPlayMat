@@ -122,6 +122,9 @@ io.on('connection', socket=>{
         console.log(blackout)
         socket.broadcast.emit('blackout-switch', blackout)
     })
+    socket.on('change-map', change=>{
+        socket.broadcast.emit('map-change', change)
+    })
 })
 
 // Routing GET REQUESTS
@@ -332,7 +335,7 @@ router.post('/addMap', upload_.single('map'), (req,res,next)=>{
             res.send(err)
             console.log(err)
         }else{
-            res.send('Done!')
+            res.send(req.file.originalname + '.' + mimetype)
         }
     })
 })
@@ -363,6 +366,15 @@ router.post('/addMaps', upload_.array('map'), (req,res,next)=>{
             }
         })
     }
+})
+
+router.post('/removeMap', (req,res,next)=>{
+    let map = req.body.map;
+
+    fs.rmSync( __dirname + `/maps/${map}` ,{recursive: true, force: true})
+
+    res.send('Delete!')
+
 })
 
 router.post('/createCampaign', (req,res,next)=>{
@@ -416,6 +428,7 @@ router.post('/createCampaign', (req,res,next)=>{
 
 })
 
+// Campaign CRUD
 router.post('/getCampaign', (req,res,next)=>{
 
     let campaign = req.body.campaign
@@ -503,6 +516,25 @@ router.post('/all-characters', (req,res,next)=>{
     }
     readChar();
 
+})
+
+router.post('/addMap-campaign', (req,res,next)=>{
+
+    // REQ: Map and Campaign
+
+    let campaign = req.body.campaign;
+    let map = req.body.map;
+
+    async function addMap(){
+        try {
+            const newMap = await Campaign.findOneAndUpdate({campaign:campaign}, {$push: {maps: map}})
+            res.send(newMap)
+        } catch (error) {
+            console.log(error)
+            res.send(error)
+        }
+    }
+    addMap();
 })
 
 // GET CHARACTER SHEET API - CRUD 

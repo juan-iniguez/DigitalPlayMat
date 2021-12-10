@@ -39,6 +39,7 @@ const mapSchema = new mongoose.Schema({
 const campaignSchema = new mongoose.Schema({
     campaign: String,
     description: String,
+    DM: String,
     maps: [],
     mapPositions: [{
         mapName: String,
