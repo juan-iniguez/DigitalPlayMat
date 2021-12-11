@@ -3455,3 +3455,8 @@ function getPlayerList(){
     }
 
 }
+
+// Add Character to Player List
+function addCharacterToList(char){
+    characters.push(char)
+}
