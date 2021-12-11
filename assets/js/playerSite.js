@@ -33,6 +33,9 @@ socket.on('change-imgPos', imgp=>{
 socket.on('map-change', change=>{
     onMapChange(change);
 })
+socket.on('player-edited', edit=>{
+    receivedEditedPlayer(edit);
+})
 
 window.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -2848,7 +2851,7 @@ function tokenRemoval(tokenName){
     console.log(tokenName)
     for(i=0;i<tokenPos.length;i++){
         if(tokenName === tokenPos[i].player){
-
+            console.log(tokenPos[i].player)
             tokenPos.splice(i, 1)
             tokens.splice(i, 1)
 
@@ -3204,4 +3207,8 @@ function onMapChange(change){
     imgPos.y = change.pos.y;
     tilePosition.tileX = change.tile.tileX;
     tilePosition.tileY = change.tile.tileY;
+}
+
+function receivedEditedPlayer(player){
+    characters = player;
 }

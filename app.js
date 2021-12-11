@@ -125,6 +125,9 @@ io.on('connection', socket=>{
     socket.on('change-map', change=>{
         socket.broadcast.emit('map-change', change)
     })
+    socket.on('player-edit', char=>{
+        socket.broadcast.emit('player-edited', char)
+    })
 })
 
 // Routing GET REQUESTS

@@ -1947,7 +1947,7 @@ function doEditPlayers(){
             // Item Container
             let playerItemC = document.createElement('div');
             playerItemC.className = 'player-item-c'
-            playerItemC.name = el.playerName;
+            playerItemC.name = el.name;
             editPlayerList.appendChild(playerItemC);
     
             // Text Input Container
@@ -1965,7 +1965,7 @@ function doEditPlayers(){
             removePlayer.className = 'remove-player'
             removePlayer.innerHTML = 'Remove Player'
             removePlayer.onclick = doRemovePlayer
-            removePlayer.name = el.playerName
+            removePlayer.name = el.name
             
             // Img Input Main
             let imgInputMain = document.createElement('div');
@@ -1981,22 +1981,22 @@ function doEditPlayers(){
             // Img bucket to reference for extraction
             let imgReference = document.createElement('img');
             imgReference.src = el.img;
-            imgReference.name = el.playerName;
+            imgReference.name = el.name;
             imgReference.className = 'img-reference';
             imgHolderA.appendChild(imgReference)
 
             // Img Holder Itself (LABEL)
             let imgHolder = document.createElement('label');
-            imgHolder.htmlFor = el.playerName
+            imgHolder.htmlFor = el.name
             imgHolder.className = 'img-edit';
-            imgHolder.name = el.playerName;
-            imgHolder.style = `background-image: url(${el.img})`
+            imgHolder.name = el.name;
+            imgHolder.style = `background-image: url(${el.token})`
             imgHolderA.appendChild(imgHolder);
             
             // Img Holder Input file bucket
             let imgFiles = document.createElement('input')
-            imgFiles.id = el.playerName
-            imgFiles.name = el.playerName
+            imgFiles.id = el.name
+            imgFiles.name = el.name
             imgFiles.type = 'file'
             imgFiles.accept = '.jpeg, .png, .jpg'
             imgFiles.style = 'opacity:0;width:0px;height:0px;position:absolute;'
@@ -2005,11 +2005,11 @@ function doEditPlayers(){
 
             // Name Input
             let nameInput = document.createElement('input');
-            nameInput.value = el.playerName;
+            nameInput.value = el.name;
             nameInput.type = 'text';
             nameInput.placeholder = 'Player Name'
             nameInput.className = 'edit-input name-edit-input';
-            nameInput.name = el.playerName;
+            nameInput.name = el.name;
             textInpMain.appendChild(nameInput);
     
             // Class Input
@@ -2018,7 +2018,7 @@ function doEditPlayers(){
             classInput.type = 'text';
             classInput.placeholder = 'Class'
             classInput.className = 'edit-input class-edit-input';
-            classInput.name = el.playerName;
+            classInput.name = el.name;
             textInpMain.appendChild(classInput);
     
             // Race Input
@@ -2027,7 +2027,7 @@ function doEditPlayers(){
             raceInput.type = 'text';
             raceInput.placeholder = 'Race'
             raceInput.className = 'edit-input race-edit-input';
-            raceInput.name = el.playerName;
+            raceInput.name = el.name;
             textInpMain.appendChild(raceInput);
             textInpMain.appendChild(removePlayer)
 
@@ -2038,23 +2038,34 @@ function doEditPlayers(){
     
             // HP Input
             let HPLabel = document.createElement('label')
-            HPLabel.innerHTML = 'Hitpoints'
+            HPLabel.innerHTML = 'HP'
             let HPInput = document.createElement('input')
-            HPInput.value = el.HP;
+            HPInput.value = el.hitpoints;
             HPInput.type = 'number'
             HPInput.className = 'number-edit-input hp';
-            HPInput.name = el.playerName;
+            HPInput.name = el.name;
             statsC.appendChild(HPLabel)
             statsC.appendChild(HPInput);
     
+            // AC Input
+            let ACLabel = document.createElement('label')
+            ACLabel.innerHTML = 'AC'
+            let ACInput = document.createElement('input')
+            ACInput.value = el.armorClass;
+            ACInput.type = 'number'
+            ACInput.className = 'number-edit-input ac';
+            ACInput.name = el.name;
+            statsC.appendChild(ACLabel)
+            statsC.appendChild(ACInput);
+
             // Speed Input
             let speedLabel = document.createElement('label')
-            speedLabel.innerHTML = 'Speed'
+            speedLabel.innerHTML = 'SP'
             let speedInput = document.createElement('input')
             speedInput.value = el.speed;
             speedInput.type = 'number'
             speedInput.className = 'number-edit-input speed';
-            speedInput.name = el.playerName;
+            speedInput.name = el.name;
             statsC.appendChild(speedLabel)
             statsC.appendChild(speedInput);    
         }
@@ -2119,8 +2130,8 @@ function updateImageEdit(e){
 
                         // console.log(data)
 
-                        referenceSelected.src = data;
-                        preview.style = `background-image: url('${data}')`;
+                        referenceSelected.src = data.URI;
+                        preview.style = `background-image: url('${data.URI}')`;
 
                     } catch (error) {
                         console.log(error)
@@ -2143,6 +2154,7 @@ function updatePlayers(){
     let Pclass = document.getElementsByClassName('class-edit-input')
     let Praces = document.getElementsByClassName('race-edit-input')
     let Php = document.getElementsByClassName('number-edit-input hp')
+    let Pac = gEC('number-edit-input ac')
     let Psp = document.getElementsByClassName('number-edit-input speed')
     let Pimg = document.getElementsByClassName('img-reference')
 
@@ -2150,26 +2162,38 @@ function updatePlayers(){
 
     for(i=0;i<Pnames.length;i++){
         let playerObj = {};
-        playerObj.playerName = Pnames[i].value;
+        playerObj.name = Pnames[i].value;
         playerObj.class = Pclass[i].value
         playerObj.race = Praces[i].value
-        playerObj.HP = Php[i].value
+        playerObj.hitpoints = Php[i].value
+        playerObj.armorClass = Pac[i].value
         playerObj.speed = Psp[i].value
-        playerObj.img = Pimg[i].src
+        playerObj.token = Pimg[i].src
         newPlayerList.push(playerObj)
 
+        for(let el of characters){
+            if(el.name === Pnames[i].name){
+                el.name = Pnames[i].value;
+                el.race = Praces[i].value;
+                el.class = Pclass[i].value;
+                el.hitpoints = Php[i].value;
+                el.armorClass = Pac[i].value;
+                el.speed = Psp[i].value;
+                el.token = Pimg[i].src;
+            }
+        }
+        
         // Use new Player List to redo TokenPos and Tokens
-
         //  i is the index of Player List
         // Compare the player list name to the tokenPos and Tokens
-
+        
         for(let el of tokenPos){
-            if(el.player === playerList[i].playerName){
+            if(el.player === characters[i].name){
                 el.player = Pnames[i].value;
             }
         }
         for(let el of tokens){
-            if(el.index === playerList[i].playerName){
+            if(el.index === characters[i].name){
                 el.index = Pnames[i].value;
                 let doChangeIcon = new Image()
                 doChangeIcon.src = Pimg[i].src;
@@ -2178,9 +2202,20 @@ function updatePlayers(){
         }
     }
 
+    socket.emit('player-edit', characters)
+    
+    // async function uploadtoDB(){
+    //     try {
+    //         const {data} = await axios.post('characters')
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
+    // uploadtoDB();
     // Make new Player List
-    playerList = []
-    playerList = newPlayerList
+    // playerList = []
+    // playerList = newPlayerList
+
     exitPlayerMenu();
 }
 
@@ -2493,8 +2528,6 @@ function deleteToken(e){
             }
         }
     }
-
-
 }
 
 // Token Information Context Menu
